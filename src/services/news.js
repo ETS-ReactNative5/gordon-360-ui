@@ -107,8 +107,6 @@ const getFilteredNews = (unexpiredNews, query) => {
       }
     }
     exploded.push(tempstr);
-
-    console.log(exploded);
     let queryparts = exploded.map((q) => q.trim()).filter((q) => q !== '');
     for (let querypart of queryparts) {
       if (
