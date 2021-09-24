@@ -91,7 +91,25 @@ const getNotExpiredFormatted = async () => {
  */
 const getFilteredNews = (unexpiredNews, query) => {
   return unexpiredNews.filter((newsitem) => {
-    let queryparts = query.split(' ').filter((q) => q !== '');
+    let inquotes = false;
+    let exploded = [];
+    let tempstr = '';
+    for (let chr of query.split('')) {
+      if (chr === "'" || chr === '"') {
+        inquotes = !inquotes;
+        exploded.push(tempstr);
+        tempstr = '';
+      } else if (chr === ' ' && !inquotes) {
+        exploded.push(tempstr);
+        tempstr = '';
+      } else {
+        tempstr += chr;
+      }
+    }
+    exploded.push(tempstr);
+
+    console.log(exploded);
+    let queryparts = exploded.map((q) => q.trim()).filter((q) => q !== '');
     for (let querypart of queryparts) {
       if (
         newsitem.Body.toLowerCase().includes(querypart) ||
