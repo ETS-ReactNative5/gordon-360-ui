@@ -66,44 +66,47 @@ export default class Activity extends Component {
       return sessA - sessB;
     });
 
-    // format sessions into a string representing the timespan(s) of the membership
-    //while (sessionsList.length > 0) {
-    let curSess = sessionsList.shift();
-
     // Pop first session code from array and split into months and years, which are saved as
     // the initial start and end dates
-    let startMon = this.sliceStart(curSess);
-    let endMon = this.sliceEnd(curSess);
-    let startYear = this.sliceYear(curSess),
+    let startMon = this.sliceStart(sessionsList[0]);
+    let endMon = this.sliceEnd(sessionsList[0]);
+    let startYear = this.sliceYear(sessionsList[0]),
       endYear = startYear;
+
+    let durations = [sessionsList.length];
 
     // For each other session, if it is consecutive to the current end date,
     // save its end date as the new end date, otherwise, add the current start and end dates to
     // the string 'duration' (because the streak is broken) and prepare to start a new streak.
     // Loop assumes sessions will be sorted from earliest to latest
-    while (sessionsList.length > 0) {
-      let curSess = sessionsList.shift();
-      let nextStartMon = this.sliceStart(curSess);
-      let nextYear = this.sliceYear(curSess);
-      if (this.checkConsecutiveness([endMon, endYear, nextStartMon, nextYear])) {
-        // a streak of consecutive involvement continues
-        endMon = this.sliceEnd(curSess);
-        endYear = this.sliceYear(curSess);
-      } else {
-        // a streak has been broken; add its start and end to the string and start new streak
-
-        // don't show the year twice if the months are of the same year
-        if (startYear === endYear) {
-          duration += startMon;
+    durations = Object.values(
+      sessionsList.map((curSess) => {
+        let nextStartMon = this.sliceStart(curSess);
+        let nextYear = this.sliceYear(curSess);
+        duration = '';
+        if (this.checkConsecutiveness([endMon, endYear, nextStartMon, nextYear])) {
+          // a streak of consecutive involvement continues
+          endMon = this.sliceEnd(curSess);
+          endYear = this.sliceYear(curSess);
         } else {
-          duration += startMon + ' ' + startYear;
+          // a streak has been broken; add its start and end to the string and start new streak
+
+          // don't show the year twice if the months are of the same year
+          if (startYear === endYear) {
+            duration += startMon;
+          } else {
+            duration += startMon + ' ' + startYear;
+          }
+          duration += '-' + endMon + ' ' + endYear + ', ';
+          startMon = this.sliceStart(curSess);
+          endMon = this.sliceEnd(curSess);
+          startYear = endYear = this.sliceYear(curSess);
         }
-        duration += '-' + endMon + ' ' + endYear + ', ';
-        startMon = this.sliceStart(curSess);
-        endMon = this.sliceEnd(curSess);
-        startYear = endYear = this.sliceYear(curSess);
-      }
-    }
+        return duration;
+      }),
+    );
+
+    duration = '';
 
     // Flush the remaining start and end info to duration.
     // Again, don't show the year twice if the months are of the same year
@@ -114,7 +117,13 @@ export default class Activity extends Component {
     }
     duration += '-' + endMon + ' ' + endYear;
 
-    return duration;
+    durations.push(duration);
+
+    durations = durations.map((d) => {
+      return <div class="styles.duration">{d}</div>;
+    });
+
+    return durations;
   };
 
   render() {

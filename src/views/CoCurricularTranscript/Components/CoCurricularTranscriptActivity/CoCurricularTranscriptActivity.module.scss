@@ -26,7 +26,12 @@
   .date {
     grid-column: 3;
     grid-row: 1;
+    width: 500px;
     text-align: left;
+  }
+
+  .duration {
+    width: 100%;
   }
 
   .leadership_line {

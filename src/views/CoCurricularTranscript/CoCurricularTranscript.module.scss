@@ -12,6 +12,10 @@
     grid-column: 2;
   }
 
+  body {
+    letter-spacing: 0px;
+  }
+
   /* For small and medium screens (1024px wide or less) */
   @media (max-width: 1024px) {
     .card {
