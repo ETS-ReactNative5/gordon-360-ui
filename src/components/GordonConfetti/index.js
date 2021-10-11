@@ -1,6 +1,9 @@
 import Confetti from 'react-dom-confetti';
+import { useState } from 'react';
 
 const GordonConfetti = ({ active }) => {
+  const [confetti, setConfetti] = useState(false);
+
   const config = {
     angle: 90,
     spread: 360,
@@ -12,10 +15,10 @@ const GordonConfetti = ({ active }) => {
     width: '10px',
     height: '10px',
     perspective: '500px',
-    colors: ['#000', '#77f', '#00f'],
+    colors: ['#ddd', '#88f', '#00f'],
   };
 
-  return new Confetti({ active: active, config: config });
+  return <Confetti active={active} config={config} />;
 };
 
 export default GordonConfetti;

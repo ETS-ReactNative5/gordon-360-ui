@@ -4,22 +4,6 @@ import { forwardRef, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import userService from 'services/user';
 import styles from './NavAvatar.module.css';
-import GordonConfetti from 'components/GordonConfetti';
-import Confetti from 'react-dom-confetti';
-
-const config = {
-  angle: 90,
-  spread: 360,
-  startVelocity: 40,
-  elementCount: 70,
-  dragFriction: 0.12,
-  duration: 3000,
-  stagger: 3,
-  width: '10px',
-  height: '10px',
-  perspective: '500px',
-  colors: ['#000', '#77f', '#00f'],
-};
 
 const GordonNavAvatar = ({ onLinkClick }) => {
   const [email, setEmail] = useState();
@@ -53,8 +37,6 @@ const GordonNavAvatar = ({ onLinkClick }) => {
         }
       });
 
-      popConfetti();
-
       return window.removeEventListener('message', () => {});
     }
   }, [user, authenticated]);
@@ -81,11 +63,6 @@ const GordonNavAvatar = ({ onLinkClick }) => {
     />
   ));
 
-  const popConfetti = () => {
-    setConfetti(false);
-    setConfetti(true);
-  };
-
   const label = authenticated ? (
     <>
       <Typography variant="body2" className={styles.avatar_text} align="left" gutterBottom>
@@ -102,8 +79,7 @@ const GordonNavAvatar = ({ onLinkClick }) => {
   );
 
   return (
-    <Button component={buttonLink} onClick={popConfetti()}>
-      <Confetti active={confetti} config={config} />
+    <Button component={buttonLink}>
       <div className={styles.gordon_nav_avatar}>
         {avatar}
         {label}

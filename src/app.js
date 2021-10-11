@@ -2,8 +2,9 @@ import MomentUtils from '@date-io/moment';
 import { ThemeProvider } from '@material-ui/core/styles';
 import { MuiPickersUtilsProvider } from '@material-ui/pickers';
 import UserContextProvider, { AuthContext } from 'contexts/UserContext';
+import ConfettiContextProvider from 'contexts/UserContext';
 import { createBrowserHistory } from 'history';
-import { Component } from 'react';
+import { Button, Component } from 'react';
 import { Route, Router, Switch } from 'react-router-dom';
 // Global styling that applies to entire site
 import './app.global.css';
@@ -24,7 +25,9 @@ const withContext = (App) => {
         <NetworkContextProvider>
           <UserContextProvider>
             <AuthContext.Consumer>
-              {(authenticated) => <App auth={authenticated} />}
+              <ConfettiContextProvider>
+                {(authenticated) => <App auth={authenticated} />}
+              </ConfettiContextProvider>
             </AuthContext.Consumer>
           </UserContextProvider>
         </NetworkContextProvider>
