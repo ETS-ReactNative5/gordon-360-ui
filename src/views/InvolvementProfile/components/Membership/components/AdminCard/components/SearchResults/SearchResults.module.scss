@@ -1,0 +1,36 @@
+@import '../../../../../../../../vars';
+
+.gordon_people_search {
+  width: inherit;
+
+  .people_search_suggestion_selected {
+    background-color: $neutral-light-gray;
+  }
+
+  .people_search_suggestion,
+  .people_search_suggestion_selected {
+    display: block;
+    align-self: left;
+    padding-bottom: 25px;
+    white-space: normal; // wrap long names
+  }
+
+  .people_search_suggestion_selected:hover {
+    background-color: $neutral-light-gray !important;
+  }
+
+  .people_search_dropdown:hover .people_search_suggestion_selected {
+    background-color: $neutral-white;
+  }
+
+  // .loading is shown first. After 350ms, .loading opacity and font-size go to 0. This is done
+  // to give space for .no-results to increase in font size and change to normal opacity.
+  .no_results {
+    font-size: 0;
+    opacity: 0;
+    font-style: italic;
+    color: gray;
+    animation: show-no-results 1ms infinite;
+    animation-delay: 350ms;
+  }
+}

@@ -20,6 +20,8 @@ import RequestsReceived from './components/RequestsReceived';
 import { gordonColors } from 'theme';
 import { useParams } from 'react-router';
 import GordonDialogBox from 'components/GordonDialogBox';
+import peopleSearch from 'services/people-search';
+import SearchResults from './components/SearchResults';
 
 const headerStyle = {
   backgroundColor: gordonColors.primary.blue,
@@ -31,15 +33,29 @@ const AdminCard = ({ createSnackbar, isSuperAdmin, involvementDescription, onAdd
   const [isRosterClosed, setIsRosterClosed] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [username, setUsername] = useState('');
+  const [usernameQuery, setUsernameQuery] = useState('');
   const [participationCode, setParticipationCode] = useState('');
   const [titleComment, setTitleComment] = useState('');
   const { involvementCode, sessionCode } = useParams();
+  const [peopleSearchResults, setPeopleSearchResults] = useState([]);
 
   useEffect(() => {
     involvementService
       .getStatus(involvementCode, sessionCode)
       .then((s) => setIsRosterClosed(s === 'CLOSED'));
   }, [involvementCode, sessionCode]);
+
+  useEffect(() => {
+    if (!usernameQuery || usernameQuery.trim() !== '') {
+      return;
+    }
+    console.log(usernameQuery);
+    const getResults = async () => {
+      let results = usernameQuery ? await peopleSearch.renderResults(usernameQuery) : [];
+      setPeopleSearchResults(results);
+    };
+    getResults();
+  }, [usernameQuery]);
 
   const onConfirmRoster = async () => {
     await involvementService.closeActivity(involvementCode, sessionCode);
@@ -137,9 +153,16 @@ const AdminCard = ({ createSnackbar, isSuperAdmin, involvementDescription, onAdd
             <TextField
               required
               fullWidth
-              onChange={(e) => setUsername(e.target.value)}
+              onChange={(e) => setUsernameQuery(e.target.value)}
               label="Username"
               variant="filled"
+            />
+
+            <SearchResults
+              people={peopleSearchResults}
+              handleClick={(un) => {
+                setUsernameQuery(un);
+              }}
             />
           </Grid>
           <Grid item>
