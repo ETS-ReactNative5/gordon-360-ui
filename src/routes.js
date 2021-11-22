@@ -18,6 +18,7 @@ import Admin from './views/Admin';
 import Timesheets from './views/Timesheets';
 import BannerSubmission from './views/BannerSubmission';
 import News from './views/News';
+import NewsAdmin from './views/News/NewsAdmin';
 import Page404 from './views/Page404';
 import AcademicCheckIn from './views/AcademicCheckIn';
 
@@ -123,6 +124,11 @@ const routes = [
     name: 'Banner',
     path: '/banner',
     component: BannerSubmission,
+  },
+  {
+    name: 'News Admin',
+    path: '/news/admin',
+    component: NewsAdmin,
   },
   {
     name: 'News',

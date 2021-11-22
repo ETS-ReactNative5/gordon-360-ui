@@ -25,7 +25,7 @@ import Dropzone from 'react-dropzone';
 import newsService from 'services/news';
 import userService from 'services/user';
 import { gordonColors } from 'theme';
-import NewsList from './components/NewsList';
+import NewsList from './../components/NewsList';
 
 const CROP_DIM = 200; // Width of cropped image canvas
 
@@ -147,25 +147,25 @@ const StudentNews = (props) => {
 
   // TODO: Currently disabled and unused
   /*
-  search = () => {
-    return async (event) => {
-      // await ensures state has been updated before continuing
-      await setState({
-        search: event.target.value,
-      });
-      const filteredNews = await newsService.getFilteredNews(state);
-      setState({ filteredNews: filteredNews, loading: false });
-    };
-  }
-  */
+    search = () => {
+      return async (event) => {
+        // await ensures state has been updated before continuing
+        await setState({
+          search: event.target.value,
+        });
+        const filteredNews = await newsService.getFilteredNews(state);
+        setState({ filteredNews: filteredNews, loading: false });
+      };
+    }
+    */
 
   const createSnackbar = (text, severity) => {
     setSnackbar({ open: true, text, severity });
   };
 
   /**********************************************************
-  /*Following functions are solely related to photo submission*
-  /**********************************************************/
+    /*Following functions are solely related to photo submission*
+    /**********************************************************/
 
   async function clearPhotoDialogErrorTimeout() {
     clearTimeout(photoDialogErrorTimeout);
@@ -220,15 +220,15 @@ const StudentNews = (props) => {
     setCurrentlyEditing(newsID);
 
     /*
-    Error checking. Theoretically, this code is designed so that
-    When the get method in the API service is called from the frontend,
-    it will return the image data, even though that's not the value
-    of the image column in news entries. But in the impossible event that
-    it somhow DID return the path of the image instead of the image data,
-    not only would that produce garbage and make the cropper have trouble,
-    but it also is a potential security concern; it sends data back to the
-    client that shouldn't be sent anywhere.
-    */
+      Error checking. Theoretically, this code is designed so that
+      When the get method in the API service is called from the frontend,
+      it will return the image data, even though that's not the value
+      of the image column in news entries. But in the impossible event that
+      it somhow DID return the path of the image instead of the image data,
+      not only would that produce garbage and make the cropper have trouble,
+      but it also is a potential security concern; it sends data back to the
+      client that shouldn't be sent anywhere.
+      */
     let base64Test = /^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?$/;
 
     if (base64Test.test(newsItem.Image) && newsItem.Image !== null) {
@@ -243,12 +243,12 @@ const StudentNews = (props) => {
    * Handles closing the Photo Updater Dialog Box
    */
   /*
-  async function handleCloseCancel() {
-    setOpenPhotoDialog(false);
-    setShowCropper(null);
-    clearPhotoDialogErrorTimeout();
-  }
-  */
+    async function handleCloseCancel() {
+      setOpenPhotoDialog(false);
+      setShowCropper(null);
+      clearPhotoDialogErrorTimeout();
+    }
+    */
 
   function onCropperZoom(event) {
     if (event.detail.ratio > 1) {
@@ -374,8 +374,8 @@ const StudentNews = (props) => {
   }
 
   /***************************************************
-  /*End of methods solely related to photo submission*
-  /***************************************************/
+    /*End of methods solely related to photo submission*
+    /***************************************************/
 
   // if all of the inputs are filled, enable 'submit' button
   let submitButtonDisabled = newPostCategory === '' || newPostSubject === '' || newPostBody === '';
@@ -410,21 +410,6 @@ const StudentNews = (props) => {
           </Fab>
 
           <Grid container justify="center">
-            {/* Admin View Link */}
-            <Grid item container xs={12} md={12} lg={8} justify="center">
-              <Button
-                color="primary"
-                style={{
-                  backgroundColor: gordonColors.secondary.orange,
-                  color: gordonColors.neutral.grayShades[50],
-                }}
-                variant="contained"
-                onClick={() => (window.location.pathname = '/news/admin')}
-              >
-                ADMIN VIEW
-              </Button>
-            </Grid>
-
             {/* Search */}
             <Grid item xs={12} md={12} lg={8}>
               <Grid
@@ -451,7 +436,7 @@ const StudentNews = (props) => {
             </Grid>
 
             {/* NOTE: leaving helper text for now in case
-            that is better than disabling submit button */}
+              that is better than disabling submit button */}
             {/* Create Posting */}
             <GordonDialogBox
               open={openPostActivity}
