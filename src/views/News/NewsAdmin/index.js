@@ -70,7 +70,7 @@ const styles2 = {
   },
 };
 
-const StudentNews = (props) => {
+const StudentNews = () => {
   const [search, setSearch] = useState('');
   const [openPostActivity, setOpenPostActivity] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -144,20 +144,6 @@ const StudentNews = (props) => {
     setCurrentlyEditing(false);
     setCropperImageData(null);
   }
-
-  // TODO: Currently disabled and unused
-  /*
-    search = () => {
-      return async (event) => {
-        // await ensures state has been updated before continuing
-        await setState({
-          search: event.target.value,
-        });
-        const filteredNews = await newsService.getFilteredNews(state);
-        setState({ filteredNews: filteredNews, loading: false });
-      };
-    }
-    */
 
   const createSnackbar = (text, severity) => {
     setSnackbar({ open: true, text, severity });
