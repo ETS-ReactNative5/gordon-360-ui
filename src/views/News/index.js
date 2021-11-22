@@ -410,6 +410,20 @@ const StudentNews = (props) => {
           </Fab>
 
           <Grid container justify="center">
+            {/* Admin View Link */}
+            <Grid item container xs={12} md={12} lg={8} justify="center">
+              <Button
+                color="primary"
+                style={{
+                  backgroundColor: gordonColors.secondary.orange,
+                  color: gordonColors.neutral.grayShades[50],
+                }}
+                variant="contained"
+              >
+                ADMIN VIEW
+              </Button>
+            </Grid>
+
             {/* Search */}
             <Grid item xs={12} md={12} lg={8}>
               <Grid
