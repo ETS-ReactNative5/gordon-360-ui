@@ -1,4 +1,4 @@
-import React, { Component, Fragment } from 'react';
+import { Component, Fragment } from 'react';
 import Moment from 'moment';
 
 import { Calendar, momentLocalizer } from 'react-big-calendar';
@@ -8,7 +8,8 @@ import schedule from 'services/schedule';
 import myschedule from 'services/myschedule';
 import session from 'services/session';
 
-import './schedulecalendar.css';
+// @TODO CSSMODULES - Schedule Calendar needs work but left as normal for now
+import './ScheduleCalendar.css';
 
 export default class GordonScheduleCalendar extends Component {
   constructor(props) {

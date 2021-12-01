@@ -3,8 +3,6 @@
  *
  * @module studentNews
  */
-// Written by Jessica Guan
-// Modified by Cameron Abbot
 
 import { DateTime } from 'luxon';
 import http from './http';
@@ -12,24 +10,25 @@ import http from './http';
 /**
  * @global
  * @typedef NewsCategories
- * @property {Number} categoryID the id number for the news category
- * @property {String} categoryName the name of the news category
- * @property {Number} SortOrder the rank of the news category for sorting
+ * @property {number} categoryID the id number for the news category
+ * @property {string} categoryName the name of the news category
+ * @property {number} SortOrder the rank of the news category for sorting
  */
 
 /**
  * @global
  * @typedef NewsItem
- * @property {Number} SNID
- * @property {String} ADUN username of the poster
- * @property {Number} categoryID the id number of the category to which the item belongs
- * @property {String} Subject the subject of the news item
- * @property {String} Body the main body of the news item
+ * @property {number} SNID The ID of the NewsItem
+ * @property {string} ADUN username of the poster
+ * @property {number} categoryID the id number of the category to which the item belongs
+ * @property {string} Subject the subject of the news item
+ * @property {string} Body the main body of the news item
+ * @property {string} [Image] the image of the news item
  * @property {boolean} Sent whether the item has been sent
  * @property {boolean} thisPastMailing whether it belongs to this past mailing
  * @property {Date} Entered the date the item was entered into the system
- * @property {String} fname first name of poster
- * @property {String} lname last name of poster
+ * @property {string} fname first name of poster
+ * @property {string} lname last name of poster
  * @property {Date} ManualExpirationDate the expiration Date of the item
  */
 
@@ -50,6 +49,7 @@ const getPostingByID = (id) => http.get(`news/${id}`);
  * - date posted
  * - year posted
  * - posting author
+ *
  * @param {*} posting The news posting to format
  */
 function formatPosting(posting) {
@@ -72,7 +72,8 @@ function formatPosting(posting) {
 /**
  * Gets all unexpired student news
  * and formats
- * @return {Promise<any>} Student news
+ *
+ * @returns {Promise<any>} Student news
  */
 const getNotExpiredFormatted = async () => {
   let unexpiredNews = await getNotExpired();
@@ -85,10 +86,28 @@ const getNotExpiredFormatted = async () => {
 };
 
 /**
- * Gets today's news
- * for use on the Home Page card
- * and formats
- * @return {Promise<any>} Student news
+ * Gets unexpired student news matching a search string
+ *
+ * @param {NewsItem[]} unexpiredNews the list of unfiltered news items
+ * @param {string} query the search query
+ * @returns {Promise<any>} Student news
+ */
+const getFilteredNews = (unexpiredNews, query) => {
+  const lowerquery = query.toLowerCase();
+  return unexpiredNews.filter((newsitem) => {
+    return (
+      newsitem.Body.toLowerCase().includes(lowerquery) ||
+      newsitem.ADUN.toLowerCase().includes(lowerquery) ||
+      newsitem.categoryName.toLowerCase().includes(lowerquery) ||
+      newsitem.Subject.toLowerCase().includes(lowerquery)
+    );
+  });
+};
+
+/**
+ * Gets today's news for use on the Home Page card and formats
+ *
+ * @returns {Promise<any>} Student news
  */
 const getTodaysNews = async () => {
   let news = await getNewNews();
@@ -104,7 +123,8 @@ const getTodaysNews = async () => {
  * NOTE: not currently used, might be used in future filter features
  * Gets today's news for given category
  * for use on the Home Page card
- * @param {Number} category the category of news
+ *
+ * @param {number} category the category of news
  */
 // const getTodaysNews = async category => {
 //   let news;
@@ -119,9 +139,9 @@ const getTodaysNews = async () => {
 // }
 
 /**
- * Get today's student news
- * for use on the Home Page card
- * @return {Promise<any>} Student news
+ * Get today's student news for use on the Home Page card
+ *
+ * @returns {Promise<any>} Student news
  */
 const getPersonalUnapprovedFormatted = async () => {
   let news = await getPersonalUnapproved();
@@ -135,10 +155,10 @@ const getPersonalUnapprovedFormatted = async () => {
 
 /**
  * NOTE: Not currently used
- * Get all unexpired news for given category
- * For use on the News Page
- * @param {Number} category the category that
- * @return {Promise<any>} Student news
+ * Get all unexpired news for given category For use on the News Page
+ *
+ * @param {number} category the category that
+ * @returns {Promise<any>} Student news
  */
 const getNewsByCategory = async (category) => {
   let news;
@@ -152,57 +172,13 @@ const getNewsByCategory = async (category) => {
   return categoryNews;
 };
 
-/**
- * Filter the news page
- * (currently only search)
- * @param {any} filters - the state of news that includes filter information
- * @return {Promise<any>} news that has been filtered
- */
-async function getFilteredNews(filters) {
-  // source news
-  let news = filters.news;
-  // TODO: apply category filters
-  // news = filterbyCategory(filters, allNews);
-  let filteredNews = [];
-
-  // TODO: This is incorrect in events.js -> should be length check rather than null check
-  // TODO: with category filters, if news becomes 0 then search should reset it here
-  // if (news.length === 0) {
-  //   news = filters.news;
-  // }
-
-  // SEARCH FILTER
-  if (filters.search !== '') {
-    // Approved News
-    for (let i = 0; i < news.length; i++) {
-      // subjects
-      if (news[i].Subject.toLowerCase().includes(filters.search.toLowerCase())) {
-        filteredNews.push(news[i]);
-      }
-      // categories
-      else if (news[i].categoryName.toLowerCase().includes(filters.search.toLowerCase())) {
-        filteredNews.push(news[i]);
-      }
-      // authors
-      else if (news[i].author.toLowerCase().includes(filters.search.toLowerCase())) {
-        filteredNews.push(news[i]);
-      }
-      // dates
-      else if (news[i].dayPosted.toLowerCase().includes(filters.search.toLowerCase())) {
-        filteredNews.push(news[i]);
-      }
-    }
-    news = filteredNews;
-  }
-  return news;
-}
-
 /******************* POST **********************/
 
 /**
  * Submits a student news item
+ *
  * @param {any} newsItem The data which makes up the student news item
- * @return {Promise<any>} Response body
+ * @returns {Promise<any>} Response body
  */
 async function submitStudentNews(newsItem) {
   try {
@@ -216,8 +192,9 @@ async function submitStudentNews(newsItem) {
 
 /**
  * Deletes a student news item
+ *
  * @param {any} newsID The SNID of the news item to delete
- * @return {Promise.<Object>} deleted object
+ * @returns {Promise.<Object>} deleted object
  */
 async function deleteStudentNews(newsID) {
   try {
@@ -231,11 +208,13 @@ async function deleteStudentNews(newsID) {
 
 /**
  * Edits a student news item
+ *
+ * @description
  * Posting must be authored by user and unapproved to edit
  * Calls delete, then create rather than an actual update request
  * @param {any} newsID The SNID of the news item to delete
  * @param {any} newData The JSON object that contains new data for update
- * @return {Promise.<Object>} deleted object
+ * @returns {Promise.<Object>} deleted object
  */
 async function editStudentNews(newsID, newData) {
   try {
@@ -245,7 +224,7 @@ async function editStudentNews(newsID, newData) {
   }
 }
 
-export default {
+const newsService = {
   getNewsByCategory,
   getCategories,
   getTodaysNews,
@@ -258,3 +237,5 @@ export default {
   editStudentNews,
   getPostingByID,
 };
+
+export default newsService;

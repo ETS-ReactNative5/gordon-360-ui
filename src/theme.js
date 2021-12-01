@@ -1,4 +1,4 @@
-import createMuiTheme from '@material-ui/core/styles/createMuiTheme';
+import { createTheme } from '@material-ui/core/styles';
 
 // Colors from http://www.gordon.edu/brandstandards
 // Shades from https://goo.gl/AF45tZ
@@ -104,7 +104,7 @@ export const windowBreakWidths = {
   breakXL: 1920,
 };
 
-const theme = createMuiTheme({
+const theme = createTheme({
   palette: {
     primary: gordonColors.primary.blueShades,
     secondary: gordonColors.primary.cyanShades,
@@ -116,6 +116,13 @@ const theme = createMuiTheme({
   },
   typography: {
     fontFamily: ['Gotham SSm 7r', 'Gotham SSm A', 'Gotham SSm B', 'sans-serif'].join(','),
+  },
+  overrides: {
+    MuiTooltip: {
+      tooltip: {
+        backgroundColor: gordonColors.neutral.darkGray,
+      },
+    },
   },
 });
 

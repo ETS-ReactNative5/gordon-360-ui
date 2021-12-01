@@ -1,114 +1,89 @@
-import React, { Component } from 'react';
-import event from 'services/event';
-import GordonLoader from 'components/Loader';
+import { Button, Grid, List, Typography } from '@material-ui/core';
 import EventList from 'components/EventList';
+import GordonUnauthorized from 'components/GordonUnauthorized';
+import GordonLoader from 'components/Loader';
+import { useAuth } from 'hooks';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import event from 'services/event';
 import { gordonColors } from 'theme';
 
-import { List, Grid, Card, CardContent, Button, Typography } from '@material-ui/core';
+const style = {
+  button: {
+    background: gordonColors.primary.cyan,
+    color: 'white',
+  },
+};
 
-export default class EventsAttended extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      events: [],
-      loading: true,
-    };
-  }
-  componentDidMount() {
-    if (this.props.authentication) {
-      this.loadEvents();
-    }
-  }
+const EventsAttended = () => {
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const authenticated = useAuth();
 
-  async loadEvents() {
-    this.setState({ loading: true });
-    const events = await event.getAttendedChapelEvents();
-    this.setState({ events, loading: false });
-  }
-
-  render() {
-    let content;
-
-    const style = {
-      button: {
-        background: gordonColors.primary.cyan,
-        color: 'white',
-      },
-    };
-
-    if (this.props.authentication) {
-      if (this.state.loading === true) {
-        content = <GordonLoader />;
-      } else if (this.state.events.length > 0) {
-        content = (
-          <Grid container direction="row" justify="center" spacing="2">
-            <Grid item align="center">
-              <Button
-                variant="contained"
-                style={style.button}
-                component={Link}
-                to="/events?CLW%20Credits"
-              >
-                Need More Chapel Credits?
-              </Button>
-            </Grid>
-            <Grid item>
-              <EventList events={this.state.events} />
-            </Grid>
-          </Grid>
-        );
-      } else {
-        content = (
-          <Grid item align="center">
-            <br />
-            <br />
-            <Typography variant="h4" align="center">
-              No Events To Show
-            </Typography>
-            <br />
-            <Button
-              variant="contained"
-              style={style.button}
-              component={Link}
-              to="/events?CLW%20Credits"
-            >
-              Need More Chapel Credits?
-            </Button>
-          </Grid>
-        );
+  useEffect(() => {
+    const loadEvents = async () => {
+      if (authenticated) {
+        const attendedEvents = await event.getAttendedChapelEvents();
+        setEvents(attendedEvents);
       }
-    } else {
-      content = (
-        <Grid container justify="center" spacing="2">
-          <Grid item xs={12} md={8}>
-            <Card>
-              <CardContent class="cardContent">
-                <h1>You are not logged in.</h1>
-                <br />
-                <h4>You must be logged in to view your attended events.</h4>
-                <br />
-                <Button
-                  style={style.button}
-                  onClick={() => {
-                    window.location.pathname = '';
-                  }}
-                >
-                  Login
-                </Button>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-      );
-    }
+      setLoading(false);
+    };
+    loadEvents();
+  }, [authenticated]);
 
-    return (
-      <Grid container justify="center">
+  let content;
+
+  if (loading === true) {
+    content = <GordonLoader />;
+  } else if (!authenticated) {
+    content = <GordonUnauthorized feature={'your attended events'} />;
+  } else if (events.length > 0) {
+    content = (
+      <Grid container direction="row" justifyContent="center" spacing="2">
+        <Grid item align="center">
+          <Button
+            variant="contained"
+            style={style.button}
+            component={Link}
+            to="/events?CLW%20Credits"
+          >
+            Need More Chapel Credits?
+          </Button>
+        </Grid>
+        <Grid item>
+          <EventList events={events} />
+        </Grid>
+      </Grid>
+    );
+  } else {
+    content = (
+      <Grid item align="center">
+        <br /> <br />
+        <Typography variant="h4" align="center">
+          No Events To Show
+        </Typography>
+        <br />
+        <Button
+          variant="contained"
+          style={style.button}
+          component={Link}
+          to="/events?CLW%20Credits"
+        >
+          Need More Chapel Credits?
+        </Button>
+      </Grid>
+    );
+  }
+
+  return (
+    <section>
+      <Grid container justifyContent="center">
         <Grid item xs={12} md={12} lg={8}>
           <List>{content}</List>
         </Grid>
       </Grid>
-    );
-  }
-}
+    </section>
+  );
+};
+
+export default EventsAttended;

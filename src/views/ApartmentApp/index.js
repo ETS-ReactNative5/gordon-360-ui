@@ -1,25 +1,28 @@
-//Main apartment application page
-import React, { useState, useEffect } from 'react';
-import { Grid, Card, CardContent, Button } from '@material-ui/core/';
+import GordonLimitedAvailability from 'components/GordonLimitedAvailability';
+import GordonOffline from 'components/GordonOffline';
+import GordonUnauthorized from 'components/GordonUnauthorized';
 import GordonLoader from 'components/Loader';
-import StaffMenu from './components/StaffMenu';
-import StudentApplication from './components/StudentApplication';
+import { useAuth } from 'hooks';
 import useNetworkStatus from 'hooks/useNetworkStatus';
+// eslint-disable-next-line no-unused-vars
+import { Dispatch, SetStateAction, useEffect, useState } from 'react'; // eslint disabled because it doesn't recognise type imports that ARE used in JSDoc comments
+import { NotFoundError } from 'services/error';
 import housing from 'services/housing';
 import user from 'services/user';
-import './apartmentApp.css';
-import { NotFoundError } from 'services/error';
+import styles from './ApartmentApp.module.css';
+import StaffMenu from './components/StaffMenu';
+import StudentApplication from './components/StudentApplication';
 
 /**
  * @typedef { import('services/user').StudentProfileInfo } StudentProfileInfo
  */
 
-const ApartApp = ({ authentication }) => {
+const ApartApp = () => {
   const [loading, setLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(authentication);
+  const authenticated = useAuth();
 
   /**
-   * @type {[StudentProfileInfo, React.Dispatch<React.SetStateAction<StudentProfileInfo>>]} UserProfile
+   * @type {[StudentProfileInfo, Dispatch<SetStateAction<StudentProfileInfo>>]} UserProfile
    */
   const [userProfile, setUserProfile] = useState({});
   const [isUserStudent, setIsUserStudent] = useState(false);
@@ -30,7 +33,6 @@ const ApartApp = ({ authentication }) => {
   useEffect(() => {
     const loadPage = async () => {
       setLoading(true);
-      setIsAuthenticated(true);
       try {
         const profileInfo = await user.getProfileInfo();
         setUserProfile(profileInfo);
@@ -52,140 +54,46 @@ const ApartApp = ({ authentication }) => {
       }
     };
 
-    if (authentication) {
+    if (authenticated) {
       loadPage();
     } else {
-      // Clear out component's person-specific state when authentication becomes false
+      // Clear out component's person-specific state when authenticated becomes false
       // (i.e. user logs out) so that it isn't preserved falsely for the next user
       setUserProfile(null);
       setCanUseStaff(false);
       setIsUserStudent(false);
-      setIsAuthenticated(false);
       setLoading(false);
     }
-  }, [authentication]);
+  }, [authenticated]);
 
   if (loading) {
     return <GordonLoader />;
-  } else if (!isAuthenticated) {
+  } else if (!authenticated) {
     // The user is not logged in
-    return (
-      <Grid container justify="center">
-        <Grid item xs={12} md={8}>
-          <Card>
-            <CardContent
-              style={{
-                margin: 'auto',
-                textAlign: 'center',
-              }}
-            >
-              <h1>You are not logged in.</h1>
-              <br />
-              <h4>You must be logged in to use the Apartment Applications page.</h4>
-              <br />
-              <Button
-                color="primary"
-                variant="contained"
-                onClick={() => {
-                  window.location.pathname = '';
-                }}
-              >
-                Login
-              </Button>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-    );
+    return <GordonUnauthorized feature={'the Apartment Application page'} />;
   } else if (isOnline) {
     if (canUseStaff) {
       return (
-        <div className="staff-apartment-application">
+        <div className={styles.staff_apartment_application}>
           <StaffMenu userProfile={userProfile} />
         </div>
       );
     } else if (isUserStudent) {
       return (
-        <div className="student-apartment-application">
-          <StudentApplication userProfile={userProfile} authentication={authentication} />
+        <div className={'student_apartment_application'}>
+          <StudentApplication userProfile={userProfile} />
         </div>
       );
     } else {
       return (
-        <Grid container justify="center">
-          <Grid item xs={12} md={8}>
-            <Card>
-              <CardContent
-                style={{
-                  margin: 'auto',
-                  textAlign: 'center',
-                }}
-              >
-                <br />
-                <h1>Apartment application Unavailable</h1>
-                <h4>Apartment application is available for students or housing staff only.</h4>
-                <br />
-                <br />
-                <Button
-                  className="back-home-button"
-                  color="primary"
-                  variant="outlined"
-                  onClick={() => {
-                    window.location.pathname = '';
-                  }}
-                >
-                  Back To Home
-                </Button>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
+        <GordonLimitedAvailability
+          pageName="Apartment Application"
+          availableTo="students or housing staff"
+        />
       );
     }
   } else {
-    // If the network is offline
-    return (
-      <Grid container justify="center">
-        <Grid item xs={12} md={8}>
-          <Card>
-            <CardContent
-              style={{
-                margin: 'auto',
-                textAlign: 'center',
-              }}
-            >
-              <Grid
-                item
-                xs={2}
-                alignItems="center"
-                style={{
-                  display: 'block',
-                  marginLeft: 'auto',
-                  marginRight: 'auto',
-                }}
-              >
-                <img src={require(`${'../../NoConnection.svg'}`)} alt="Internet Connection Lost" />
-              </Grid>
-              <br />
-              <h1>Please Re-establish Connection</h1>
-              <h4>Viewing Apartment Applications has been deactivated due to loss of network.</h4>
-              <br />
-              <br />
-              <Button
-                className="back-home-button"
-                color="primary"
-                variant="outlined"
-                onClick={() => {
-                  window.location.pathname = '';
-                }}
-              >
-                Back To Home
-              </Button>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-    );
+    return <GordonOffline feature="Apartment Applications" />;
   }
 };
 

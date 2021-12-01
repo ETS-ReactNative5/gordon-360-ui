@@ -1,52 +1,34 @@
-import MenuIcon from '@material-ui/icons/Menu';
+import { AppBar, Button, IconButton, Tab, Tabs, Toolbar, Typography } from '@material-ui/core';
+import EventIcon from '@material-ui/icons/Event';
 import HomeIcon from '@material-ui/icons/Home';
 import LocalActivityIcon from '@material-ui/icons/LocalActivity';
-import EventIcon from '@material-ui/icons/Event';
-import PeopleIcon from '@material-ui/icons/People';
 // import WorkIcon from '@material-ui/icons/Work';
 import WellnessIcon from '@material-ui/icons/LocalHospital';
-import PropTypes from 'prop-types';
-import React, { useEffect, useState } from 'react';
-import DocumentTitle from 'react-document-title';
-import { Route, Switch, NavLink, Link } from 'react-router-dom';
-import './header.css';
-import GordonPeopleSearch from './components/PeopleSearch';
+import MenuIcon from '@material-ui/icons/Menu';
+import PeopleIcon from '@material-ui/icons/People';
+import GordonDialogBox from 'components/GordonDialogBox/index';
+import { useAuth, useDocumentTitle, useNetworkStatus } from 'hooks';
+import { projectName } from 'project-name';
+import { forwardRef, useEffect, useState } from 'react';
+import { Link, NavLink, Route, Switch } from 'react-router-dom';
+import routes from 'routes';
+import { windowBreakWidths } from 'theme';
 import { GordonNavAvatarRightCorner } from './components/NavAvatarRightCorner';
 import GordonNavButtonsRightCorner from './components/NavButtonsRightCorner';
-import routes from 'routes';
-import { projectName } from 'project-name';
-import GordonDialogBox from 'components/GordonDialogBox/index';
-import { windowBreakWidths } from 'theme';
-import useNetworkStatus from 'hooks/useNetworkStatus';
+import GordonPeopleSearch from './components/PeopleSearch';
+import styles from './Header.module.css';
 
-import { AppBar, Toolbar, Typography, IconButton, Tabs, Tab, Button } from '@material-ui/core';
+const ForwardLink = forwardRef((props, ref) => <Link ref={ref} {...props} />);
+const ForwardNavLink = forwardRef((props, ref) => <NavLink innerRef={ref} {...props} />);
 
-const getRouteName = (route) => {
-  if (route.name) {
-    return () => (
-      <span>
-        <DocumentTitle title={`${route.name} | ${projectName}`} />
-        {route.name}
-      </span>
-    );
-  }
-  return () => (
-    <span>
-      <DocumentTitle title={`${projectName}`} />
-      {projectName}
-    </span>
-  );
-};
-
-const ForwardLink = React.forwardRef((props, ref) => <Link ref={ref} {...props} />);
-const ForwardNavLink = React.forwardRef((props, ref) => <NavLink innerRef={ref} {...props} />);
-
-const GordonHeader = ({ authentication, onDrawerToggle, onSignOut }) => {
+const GordonHeader = ({ onDrawerToggle }) => {
   const [tabIndex, setTabIndex] = useState(0);
   const [dialog, setDialog] = useState('');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [anchorElement, setAnchorElement] = useState(null);
   const isOnline = useNetworkStatus();
+  const setDocumentTitle = useDocumentTitle();
+  const authenticated = useAuth();
 
   /**
    * Update the tab highlight indicator based on the url
@@ -94,48 +76,44 @@ const GordonHeader = ({ authentication, onDrawerToggle, onSignOut }) => {
         <GordonDialogBox
           open={dialog}
           onClose={() => setDialog(null)}
-          labelledby={'offline-dialog'}
-          describedby={'feature-deactivated'}
           title={'Offline Mode'}
-          text={
-            'This feature is unavailable offline. Please reconnect to internet to access this feature.'
-          }
           buttonClicked={() => setDialog(null)}
           buttonName={'Okay'}
-        />
+        >
+          This feature is unavailable offline. Please reconnect to internet to access this feature.
+        </GordonDialogBox>
       );
     } else if (dialog === 'unauthorized') {
       return (
         <GordonDialogBox
           open={dialog}
           onClose={() => setDialog(null)}
-          labelledby={'unauthorized-dialog'}
-          describedby={'feature-unavailable'}
           title={'Credentials Needed'}
-          text={`This feature is unavailable while not logged in. Please log in to access it.`}
           buttonClicked={() => setDialog(null)}
           buttonName={'Okay'}
-        />
+        >
+          This feature is unavailable while not logged in. Please log in to access it.
+        </GordonDialogBox>
       );
     } else {
       return null;
     }
   };
 
-  const disablableTab = (name, icon) => {
+  const requiresAuthTab = (name, icon) => {
     if (!isOnline) {
       return (
         <Tab
-          className="tab disabled-tab"
+          className={`${styles.tab} ${styles.disabled_tab}`}
           icon={icon}
           label={name}
           onClick={() => setDialog('offline')}
         />
       );
-    } else if (!authentication) {
+    } else if (!authenticated) {
       return (
         <Tab
-          className="tab disabled-tab"
+          className={`${styles.tab} ${styles.disabled_tab}`}
           icon={icon}
           label={name}
           onClick={() => setDialog('unauthorized')}
@@ -143,7 +121,15 @@ const GordonHeader = ({ authentication, onDrawerToggle, onSignOut }) => {
       );
     } else {
       const route = `/${name.toLowerCase()}`;
-      return <Tab className="tab" icon={icon} label={name} component={ForwardNavLink} to={route} />;
+      return (
+        <Tab
+          className={styles.tab}
+          icon={icon}
+          label={name}
+          component={ForwardNavLink}
+          to={route}
+        />
+      );
     }
   };
 
@@ -159,7 +145,7 @@ const GordonHeader = ({ authentication, onDrawerToggle, onSignOut }) => {
 
   const loginButton = (
     <Button
-      className="login-button"
+      className={styles.login_button}
       variant="contained"
       color="secondary"
       component={ForwardLink}
@@ -170,73 +156,74 @@ const GordonHeader = ({ authentication, onDrawerToggle, onSignOut }) => {
   );
 
   return (
-    <AppBar className="gordon-header">
+    <AppBar className={styles.gordon_header} position="static">
       <Toolbar>
         <IconButton
-          className="menu-button"
+          className={styles.menu_button}
           color="primary"
           aria-label="open drawer"
           onClick={onDrawerToggle}
         >
-          <MenuIcon className="menu-button-icon" />
+          <MenuIcon className={styles.menu_button_icon} />
         </IconButton>
 
-        <Typography className="title disable-select" variant="h6" color="inherit">
+        <Typography className={`disable_select ${styles.title}`} variant="h6" color="inherit">
           <Switch>
             {routes.map((route) => (
               <Route
                 key={route.path}
                 path={route.path}
                 exact={route.exact}
-                component={getRouteName(route)}
+                component={() => {
+                  setDocumentTitle(route.name || projectName);
+                  return <span>{route.name || projectName}</span>;
+                }}
               />
             ))}
           </Switch>
         </Typography>
 
-        <div className="center-container">
+        <div className={styles.center_container}>
           <Tabs centered value={tabIndex} onChange={(event, value) => setTabIndex(value)}>
             <Tab
-              className="tab"
+              className={styles.tab}
               icon={<HomeIcon />}
               label="Home"
               component={ForwardNavLink}
               to="/"
             />
             <Tab
-              className="tab"
+              className={styles.tab}
               icon={<LocalActivityIcon />}
               label="Involvements"
               component={ForwardNavLink}
               to="/involvements"
             />
             <Tab
-              className="tab"
+              className={styles.tab}
               icon={<EventIcon />}
               label="Events"
               component={ForwardNavLink}
               to="/events"
             />
-            {disablableTab('People', <PeopleIcon />)}
-            {/* {disablableTab('Timesheets', WorkIcon)} */}
-            {disablableTab('Wellness', <WellnessIcon />)}
+            {requiresAuthTab('People', <PeopleIcon />)}
+            {/* {requiresAuthTab('Timesheets', WorkIcon)} */}
+            {requiresAuthTab('Wellness', <WellnessIcon />)}
           </Tabs>
         </div>
 
-        {authentication ? <GordonPeopleSearch authentication={authentication} /> : loginButton}
+        <div className={styles.people_search_container_container}>
+          {/* Width is dynamic */}
+          <div className={styles.people_search_container}>
+            {authenticated ? <GordonPeopleSearch /> : loginButton}
+          </div>
+        </div>
 
-        <GordonNavAvatarRightCorner
-          onSignOut={onSignOut}
-          authentication={authentication}
-          onClick={handleOpenMenu}
-          menuOpened={isMenuOpen}
-        />
+        <GordonNavAvatarRightCorner onClick={handleOpenMenu} menuOpened={isMenuOpen} />
 
         <GordonNavButtonsRightCorner
           open={isMenuOpen}
           openDialogBox={setDialog}
-          onSignOut={onSignOut}
-          authentication={authentication}
           anchorEl={anchorElement}
           onClose={handleCloseMenu}
         />
@@ -248,8 +235,3 @@ const GordonHeader = ({ authentication, onDrawerToggle, onSignOut }) => {
 };
 
 export default GordonHeader;
-
-GordonHeader.propTypes = {
-  onDrawerToggle: PropTypes.func.isRequired,
-  onSignOut: PropTypes.func.isRequired,
-};

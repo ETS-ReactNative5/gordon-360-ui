@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   Card,
   CardContent,
@@ -12,11 +11,14 @@ import {
 } from '@material-ui/core/';
 import EmailIcon from '@material-ui/icons/Email';
 import { DateTime } from 'luxon';
+// @TODO CSSMODULES - outside directory
+import styles from '../../../../ApartmentApp.module.css';
 
 /** @typedef { import('services/housing').ApplicationDetails } ApplicationDetails */
 
 /**
  * Renders a card displaying a table of data about the current application
+ *
  * @param {Object} props The React component props
  * @param {ApplicationDetails} props.applicationDetails Object containing the details of this application
  * @returns {JSX.Element} JSX Element for the data table card
@@ -44,7 +46,7 @@ const ApplicationDataTable = ({ applicationDetails }) => {
 
   return (
     <Card>
-      <CardHeader title="Your Application Details" className="apartment-card-header" />
+      <CardHeader title="Your Application Details" className={styles.apartment_card_header} />
       <CardContent>
         <TableContainer>
           <Table>
@@ -61,8 +63,16 @@ const ApplicationDataTable = ({ applicationDetails }) => {
                 <TableRow>
                   <TableCell colSpan={2}>
                     <a href={`mailto:${editorEmail}`}>
-                      <div className="identification-card-content-card-container-info-email-container">
-                        <EmailIcon className="identification-card-content-card-container-info-email-container-icon" />
+                      <div
+                        className={
+                          styles.identification_card_content_card_container_info_email_container
+                        }
+                      >
+                        <EmailIcon
+                          className={
+                            styles.identification_card_content_card_container_info_email_container_icon
+                          }
+                        />
                         <Typography variant="body1">{editorEmail}</Typography>
                       </div>
                     </a>

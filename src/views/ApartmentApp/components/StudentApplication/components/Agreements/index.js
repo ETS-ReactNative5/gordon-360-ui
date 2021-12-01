@@ -1,82 +1,86 @@
-import React, { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
   CardHeader,
   Checkbox,
   Divider,
-  FormLabel,
   FormControl,
-  FormGroup,
   FormControlLabel,
+  FormGroup,
   FormHelperText,
+  FormLabel,
 } from '@material-ui/core/';
+import { Fragment, useEffect, useState } from 'react';
 import housing from 'services/housing';
+// @TODO CSSMODULES - outside directory
+import styles from '../../../../ApartmentApp.module.css';
 
 /**
  * Renders a card displaying the apartment application instructions
+ *
  * @param {Object} props The React component props
- * @param {*} props.onChange The user authentication
+ * @param {boolean | string} props.deleting Status of delete operation
+ * @param {Function} props.onChange Callback for change of the checkbox state
  * @returns {JSX.Element} JSX Element for the instructions card
  */
-const Agreements = ({ onChange }) => {
+const Agreements = ({ deleting, onChange }) => {
   const [checkboxes, setCheckboxes] = useState([]);
 
-  useEffect(() => {
-    const loadAgreements = async () => {
-      const currentYear = new Date().getFullYear();
-      const selectionDate = await housing.getApartmentSelectionDate();
+  const loadAgreements = async () => {
+    const currentYear = new Date().getFullYear();
+    const selectionDate = await housing.getApartmentSelectionDate();
 
-      let newCheckboxes = [
-        {
-          checked: false,
-          label: 'Each individual on the application has agreed to be on the application',
-        },
-        {
-          checked: false,
-          label:
-            'We understand that if someone on this application has not agreed to be on the application, our application will be disqualified',
-        },
-        {
-          checked: false,
-          label: 'Each individual on this application appears ONLY on this application',
-        },
-        {
-          checked: false,
-          label:
-            "We understand that if an individual on this application also appears on another group's application, our application could be disqualified",
-        },
-        {
-          checked: false,
-          label: `Any individual on this application who has been on disciplinary probation at any point during the ${
-            currentYear - 1
-          }-${currentYear} academic year has been approved to apply by the Dean of Student Care or the Director of Residence Life`,
-        },
-        {
-          checked: false,
-          label: `Each individual on this application intends to register as a full-time student by apartment selection night (${selectionDate})`,
-        },
-        {
-          checked: false,
-          label: `We understand that if any member of our application fails to register as a full-time student by ${selectionDate}, our application could be disqualified`,
-        },
-        {
-          checked: false,
-          label:
-            'We have read and understand all of the information and guidelines listed in the Instructions section',
-        },
-        {
-          checked: false,
-          label:
-            'We certify that all information provided on this application is accurate, to the best of our knowledge',
-        },
-      ];
+    const newCheckboxes = [
+      {
+        checked: false,
+        label: 'Each individual on the application has agreed to be on the application',
+      },
+      {
+        checked: false,
+        label:
+          'We understand that if someone on this application has not agreed to be on the application, our application will be disqualified',
+      },
+      {
+        checked: false,
+        label: 'Each individual on this application appears ONLY on this application',
+      },
+      {
+        checked: false,
+        label:
+          "We understand that if an individual on this application also appears on another group's application, our application could be disqualified",
+      },
+      {
+        checked: false,
+        label: `Any individual on this application who has been on disciplinary probation at any point during the ${
+          currentYear - 1
+        }-${currentYear} academic year has been approved to apply by the Dean of Student Care or the Director of Residence Life`,
+      },
+      {
+        checked: false,
+        label: `Each individual on this application intends to register as a full-time student by apartment selection night (${selectionDate})`,
+      },
+      {
+        checked: false,
+        label: `We understand that if any member of our application fails to register as a full-time student by ${selectionDate}, our application could be disqualified`,
+      },
+      {
+        checked: false,
+        label:
+          'We have read and understand all of the information and guidelines listed in the Instructions section',
+      },
+      {
+        checked: false,
+        label:
+          'We certify that all information provided on this application is accurate, to the best of our knowledge',
+      },
+    ];
 
-      setCheckboxes(newCheckboxes);
-    };
+    setCheckboxes(newCheckboxes);
+  };
 
-    loadAgreements();
-  }, []);
+  useEffect(() => loadAgreements(), []);
+
+  useEffect(() => deleting === 'success' && loadAgreements(), [deleting]);
 
   const handleChange = (event, index) => {
     setCheckboxes((prevCheckboxes) => {
@@ -89,9 +93,9 @@ const Agreements = ({ onChange }) => {
   };
 
   const AgreementChecklistItem = ({ checked, index, label, onChange }) => (
-    <React.Fragment>
+    <Fragment>
       <FormControlLabel
-        className="apartment-agreements-form-control-option"
+        className={styles.apartment_agreements_form_control_option}
         control={
           <Checkbox
             checked={checked}
@@ -103,18 +107,21 @@ const Agreements = ({ onChange }) => {
         key={index}
       />
       <Divider />
-    </React.Fragment>
+    </Fragment>
   );
 
   const error = checkboxes.some((checkbox) => !checkbox.checked);
 
   return (
     <Card>
-      <CardHeader title="Agreements" className="apartment-card-header" />
+      <CardHeader title="Agreements" className={styles.apartment_card_header} />
       <CardContent>
-        <FormControl component="fieldset" className="apartment-agreements-form-control">
+        <FormControl component="fieldset" className={styles.apartment_agreements_form_control}>
           {error && (
-            <FormLabel component="legend" className="apartment-agreements-form-control-label">
+            <FormLabel
+              component="legend"
+              className={styles.apartment_agreements_form_control_label}
+            >
               Use the checkboxes next to each statement to indicate your group's understanding
               and/or affirmative answer. Failure to complete this section will result in the
               disqualification of the application.

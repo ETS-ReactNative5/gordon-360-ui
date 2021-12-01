@@ -1,19 +1,18 @@
-import React from 'react';
 import { ListItem, ListItemIcon, ListItemText } from '@material-ui/core';
 import { NavLink } from 'react-router-dom';
 
 /**
  * A Navigation Button for the Right Corner Menu
  *
- * @param {string} unavailable why the page linked to is unavailable. Either 'offline', 'unauthorized', or null
- * @param {Function} onLinkClick function called when link is clicked
- * @param {Function}  openUnavailableDialog function to open the dialog box when the linked page is unavailable
- * @param {boolean} divider whether or to add a divider
- * @param {string} linkName the name of the link
- * @param {string} linkPath the path to be linked to
- * @param {JSX.Element} LinkIcon An optional icon to include in the link
+ * @param {Object} props the component props
+ * @param {string} props.unavailable why the page linked to is unavailable. Either 'offline', 'unauthorized', or null
+ * @param {Function} props.onLinkClick function called when link is clicked
+ * @param {Function}  props.openUnavailableDialog function to open the dialog box when the linked page is unavailable
+ * @param {boolean} props.divider whether or to add a divider
+ * @param {string} props.linkName the name of the link
+ * @param {string} props.linkPath the path to be linked to
+ * @param {JSX.Element} props.LinkIcon An optional icon to include in the link
  * @returns {JSX.ELement} A NavButton with the specified content and behavior
- *
  */
 const GordonNavButton = ({
   unavailable = null,
@@ -35,7 +34,7 @@ const GordonNavButton = ({
         <ListItemText primary={linkName} />
       </ListItem>
     ) : (
-      <NavLink exact to={linkPath} onClick={onLinkClick} className="gc360-link">
+      <NavLink exact to={linkPath} onClick={onLinkClick} className="gc360_link">
         <ListItem divider={divider} button>
           {LinkIcon && (
             <ListItemIcon>

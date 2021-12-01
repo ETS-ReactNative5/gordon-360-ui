@@ -1,9 +1,12 @@
-import React, { Component } from 'react';
-import { Doughnut, defaults } from 'react-chartjs-2';
+import { Component } from 'react';
+import { Doughnut } from 'react-chartjs-2';
 
 import { gordonColors } from 'theme';
 import session from 'services/session';
 import GordonLoader from 'components/Loader';
+
+// @TODO CSSMODULES - outside directory
+import styles from '..//DiningBalance/DiningBalance.module.css';
 
 import { Card, CardHeader, CardContent, Typography, Grid } from '@material-ui/core';
 
@@ -45,7 +48,6 @@ export default class DaysLeft extends Component {
       throw this.state.error;
     }
 
-    defaults.global.legend.display = false;
     let content;
     if (this.state.loading === true) {
       content = <GordonLoader />;
@@ -57,17 +59,13 @@ export default class DaysLeft extends Component {
         labels: ['Days Finished', 'Days Remaining'],
       };
       const options = {
-        options: {
-          legend: {
-            display: false,
-          },
-        },
+        legend: false,
       };
       content = (
         <div>
           <Grid
             container
-            justify="space-around"
+            justifyContent="space-around"
             spacing={0}
             style={{ paddingTop: 5, paddingBottom: 10 }}
           >
@@ -94,10 +92,10 @@ export default class DaysLeft extends Component {
                 alignItems: 'center',
               }}
             >
-              <div className="label-text" style={{ color: gordonColors.primary.blue }}>
+              <div className={styles.label_text} style={{ color: gordonColors.primary.blue }}>
                 {pastDays}
               </div>
-              <div class="entry-text">Days Finished</div>
+              <div className={styles.entry_text}>Days Finished</div>
             </div>
           </div>
         </div>

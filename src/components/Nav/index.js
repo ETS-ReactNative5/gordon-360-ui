@@ -1,9 +1,8 @@
 import { Divider, Drawer, Hidden } from '@material-ui/core';
-import React from 'react';
 import GordonNavAvatar from './components/NavAvatar';
 import GordonNavLinks from './components/NavLinks';
 
-const GordonNav = ({ onDrawerToggle, authentication, onSignOut, drawerOpen }) => (
+const GordonNav = ({ onDrawerToggle, drawerOpen }) => (
   <Hidden mdUp>
     <Drawer
       variant="temporary"
@@ -13,13 +12,9 @@ const GordonNav = ({ onDrawerToggle, authentication, onSignOut, drawerOpen }) =>
         keepMounted: true, // Better open performance on mobile.
       }}
     >
-      <GordonNavAvatar onLinkClick={onDrawerToggle} authentication={authentication} />
+      <GordonNavAvatar onLinkClick={onDrawerToggle} />
       <Divider />
-      <GordonNavLinks
-        onLinkClick={onDrawerToggle}
-        onSignOut={onSignOut}
-        authentication={authentication}
-      />
+      <GordonNavLinks onLinkClick={onDrawerToggle} />
     </Drawer>
   </Hidden>
 );

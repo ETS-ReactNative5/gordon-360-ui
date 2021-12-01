@@ -1,46 +1,47 @@
-import React, { useState, useEffect, useRef } from 'react';
-import Dropzone from 'react-dropzone';
-import EmailIcon from '@material-ui/icons/Email';
-import user from 'services/user';
-import { gordonColors } from 'theme';
-import { Link } from 'react-router-dom';
-import Cropper from 'react-cropper';
-import 'cropperjs/dist/cropper.css';
-import defaultGordonImage from './defaultGordonImage';
-import GordonLoader from 'components/Loader/index';
-import { windowBreakWidths } from 'theme';
-import './index.css';
-
 import {
-  Grid,
-  CardHeader,
   Button,
-  Tooltip,
+  CardHeader,
   Dialog,
   DialogActions,
   DialogContent,
   DialogContentText,
   DialogTitle,
+  Grid,
+  Tooltip,
   Typography,
 } from '@material-ui/core';
+import EmailIcon from '@material-ui/icons/Email';
+import GordonLoader from 'components/Loader/index';
+import 'cropperjs/dist/cropper.css';
+import { useEffect, useRef, useState } from 'react';
+import Cropper from 'react-cropper';
+import Dropzone from 'react-dropzone';
+import { Link } from 'react-router-dom';
+import user from 'services/user';
+import { gordonColors, windowBreakWidths } from 'theme';
 import SocialMediaLinks from './components/SocialMediaLinks';
+import defaultGordonImage from './defaultGordonImage';
+import styles from './Identification.module.css';
 
 const Identification = ({ profile, myProf, network, createSnackbar }) => {
   const CROP_DIM = 200; // pixels
-  const [isImagePublic, setIsImagePublic] = useState(null);
-  const [defaultUserImage, setDefaultUserImage] = useState(null);
-  const [preferredUserImage, setPreferredUserImage] = useState(null);
+  const [isImagePublic, setIsImagePublic] = useState();
+  const [defaultUserImage, setDefaultUserImage] = useState();
+  const [preferredUserImage, setPreferredUserImage] = useState();
   const [hasPreferredImage, setHasPreferredImage] = useState(false);
   const [isPhotosSwitched, setisPhotosSwitched] = useState(false);
-  const [showCropper, setShowCropper] = useState(null);
-  const [hasNickName, setHasNickname] = useState(Boolean);
+  const [showCropper, setShowCropper] = useState();
+  const [hasNickname, setHasNickname] = useState(Boolean);
+  const [hasMaidenName, setHasMaidenName] = useState(Boolean);
   const [openPhotoDialog, setOpenPhotoDialog] = useState(false);
-  const [photoDialogError, setPhotoDialogError] = useState(null);
+  const [photoDialogError, setPhotoDialogError] = useState();
   const [cropperData, setCropperData] = useState({ cropBoxDim: null, aspectRatio: null });
-  const [userProfile, setUserProfile] = useState(null);
-  const [currentWidth, setCurrentWidth] = useState(null);
+  const [userProfile, setUserProfile] = useState();
+  const [currentWidth, setCurrentWidth] = useState();
+  const [cliftonColor, setCliftonColor] = useState();
   const cropperRef = useRef();
-  let photoDialogErrorTimeout = null;
+  const isStudent = profile.PersonType?.includes('stu');
+  let photoDialogErrorTimeout;
 
   // Styles used throughout this component
   const style = {
@@ -111,13 +112,27 @@ const Identification = ({ profile, myProf, network, createSnackbar }) => {
         // Sets the given user's default image. If a preferred image is given but the default is undefined,
         // then this, means that the currently signed-in user is not allowed to see the default picture.
         setDefaultUserImage(defaultImage);
+
+        const cliftonStrengthColors = await profile.CliftonStrengths.Colors;
+        // create a dictionary of color frequencies
+        let colorFrequencies = {};
+        cliftonStrengthColors.forEach((x) => {
+          colorFrequencies[x] = (colorFrequencies[x] || 0) + 1;
+        });
+        // find max frequency by always recursively keeping a from every (a,b) where a >= b
+        const cliftonColor = Object.keys(colorFrequencies).reduce((a, b) =>
+          colorFrequencies[a] >= colorFrequencies[b] ? a : b,
+        );
+        setCliftonColor(cliftonColor);
       } catch (error) {
         // Do nothing
       }
       setUserProfile(profile);
 
       setIsImagePublic(profile.show_pic);
-      createNickname(profile);
+
+      setHasNickname(profile?.NickName && profile.NickName !== profile.FirstName);
+      setHasMaidenName(profile?.MaidenName && profile?.LastName !== profile.MaidenName);
     }
 
     loadUserProfile();
@@ -209,7 +224,7 @@ const Identification = ({ profile, myProf, network, createSnackbar }) => {
   async function handleCloseCancel() {
     setOpenPhotoDialog(false);
     setShowCropper(null);
-    await clearPhotoDialogErrorTimeout();
+    clearPhotoDialogErrorTimeout();
   }
 
   /**
@@ -242,7 +257,7 @@ const Identification = ({ profile, myProf, network, createSnackbar }) => {
           createSnackbar('Failed Retrieving Photo', 'error');
         }
         // Deletes the preferred image, clears any timeouts errors and closes out of the photo updater
-        await clearPhotoDialogErrorTimeout();
+        clearPhotoDialogErrorTimeout();
         setPreferredUserImage(null);
         setHasPreferredImage(false);
         setOpenPhotoDialog(false);
@@ -264,7 +279,7 @@ const Identification = ({ profile, myProf, network, createSnackbar }) => {
       .setImagePrivacy(isImagePublic)
       .then(async () => {
         // Closes out of Photo Updater and removes any error messages
-        await clearPhotoDialogErrorTimeout();
+        clearPhotoDialogErrorTimeout();
         setOpenPhotoDialog(false);
         setShowCropper(null);
         setIsImagePublic((isImagePublic + 1) % 2);
@@ -291,19 +306,16 @@ const Identification = ({ profile, myProf, network, createSnackbar }) => {
    * to stop or remove the timeout to allow another one to be made (prevents memory leaks of
    * unreferenced timeouts)
    */
-  async function clearPhotoDialogErrorTimeout() {
-    return new Promise((resolve, reject) => {
-      clearTimeout(photoDialogErrorTimeout);
-      photoDialogErrorTimeout = null;
-      setPhotoDialogError(null);
-      resolve(true);
-    });
+  function clearPhotoDialogErrorTimeout() {
+    clearTimeout(photoDialogErrorTimeout);
+    photoDialogErrorTimeout = null;
+    setPhotoDialogError(null);
   }
 
   /**
    * Creates the Photo Dialog message that will be displayed to the user
    *
-   * @return {String} The message of the Photo Dialog
+   * @returns {string} The message of the Photo Dialog
    */
   function createPhotoDialogBoxMessage() {
     let message = '';
@@ -372,7 +384,7 @@ const Identification = ({ profile, myProf, network, createSnackbar }) => {
       var i = new Image();
       i.onload = async () => {
         if (i.width < CROP_DIM || i.height < CROP_DIM) {
-          await clearPhotoDialogErrorTimeout();
+          clearPhotoDialogErrorTimeout();
           setPhotoDialogError(
             'Sorry, your image is too small! Image dimensions must be at least 200 x 200 pixels.',
           );
@@ -396,7 +408,7 @@ const Identification = ({ profile, myProf, network, createSnackbar }) => {
    * Handles the rejection of the user dropping an invalid file in the Photo Updater Dialog Box
    */
   async function onDropRejected() {
-    await clearPhotoDialogErrorTimeout();
+    clearPhotoDialogErrorTimeout();
     setPhotoDialogError('Sorry, invalid image file! Only PNG and JPEG images are accepted.');
   }
 
@@ -407,30 +419,24 @@ const Identification = ({ profile, myProf, network, createSnackbar }) => {
     }
   }
 
-  function createNickname(profile) {
-    let Name = String(profile.fullName);
-    let FirstName = Name.split(' ')[0];
-    setHasNickname(FirstName !== profile.NickName && profile.NickName !== '');
-  }
-
   /**
    * Creates the Photo Updater Dialog Box
    *
-   * @return {JSX} The JSX of the Photo Updater
+   * @returns {JSX} The JSX of the Photo Updater
    */
   function createPhotoDialogBox() {
     return (
       <Dialog
-        className="gc360-photo-dialog"
+        className="gc360_photo_dialog"
         open={openPhotoDialog}
         keepMounted
         aria-labelledby="alert-dialog-slide-title"
         aria-describedby="alert-dialog-slide-description"
       >
-        <div className="gc360-photo-dialog-box">
-          <DialogTitle className="gc360-photo-dialog-box_title">Update Photo</DialogTitle>
-          <DialogContent className="gc360-photo-dialog-box_content">
-            <DialogContentText className="gc360-photo-dialog-box_content_text">
+        <div className="gc360_photo_dialog_box">
+          <DialogTitle className="gc360_photo_dialog_box_title">Update Photo</DialogTitle>
+          <DialogContent className="gc360_photo_dialog_box_content">
+            <DialogContentText className="gc360_photo_dialog_box_content_text">
               {createPhotoDialogBoxMessage()}
             </DialogContentText>
             {!showCropper && (
@@ -440,10 +446,10 @@ const Identification = ({ profile, myProf, network, createSnackbar }) => {
                 accept="image/jpeg, image/jpg, image/png"
               >
                 {({ getRootProps, getInputProps }) => (
-                  <div className="gc360-photo-dialog-box_content_dropzone" {...getRootProps()}>
+                  <div className="gc360_photo_dialog_box_content_dropzone" {...getRootProps()}>
                     <input {...getInputProps()} />
                     <img
-                      className="gc360-photo-dialog-box_content_dropzone_img"
+                      className="gc360_photo_dialog_box_content_dropzone_img"
                       src={`data:image/jpg;base64,${preferredUserImage || defaultUserImage}`}
                       alt="Profile"
                     />
@@ -452,13 +458,13 @@ const Identification = ({ profile, myProf, network, createSnackbar }) => {
               </Dropzone>
             )}
             {showCropper && (
-              <div className="gc360-photo-dialog-box_content_cropper">
+              <div className="gc360_photo_dialog_box_content_cropper">
                 <Cropper
                   ref={cropperRef}
                   src={showCropper}
                   style={{
-                    'max-width': maxCropPreviewWidth(),
-                    'max-height': maxCropPreviewWidth() / cropperData.aspectRatio,
+                    maxWidth: maxCropPreviewWidth(),
+                    maxHeight: maxCropPreviewWidth() / cropperData.aspectRatio,
                   }}
                   autoCropArea={1}
                   viewMode={3}
@@ -474,20 +480,20 @@ const Identification = ({ profile, myProf, network, createSnackbar }) => {
               </div>
             )}
           </DialogContent>
-          <DialogActions className="gc360-photo-dialog-box_actions-top">
+          <DialogActions className="gc360_photo_dialog_box_actions_top">
             {showCropper && (
               <Button
                 variant="contained"
                 onClick={() => setShowCropper(null)}
                 style={style.button.changeImageButton}
-                className="gc360-photo-dialog-box_content_button"
+                className="gc360_photo_dialog_box_content_button"
               >
                 Go Back
               </Button>
             )}
           </DialogActions>
           {!showCropper && (
-            <DialogActions className="gc360-photo-dialog-box_actions-middle">
+            <DialogActions className="gc360_photo_dialog_box_actions_middle">
               <Tooltip
                 classes={{ tooltip: 'tooltip' }}
                 id="tooltip-hide"
@@ -516,7 +522,7 @@ const Identification = ({ profile, myProf, network, createSnackbar }) => {
               </Tooltip>
             </DialogActions>
           )}
-          <DialogActions className="gc360-photo-dialog-box_actions-bottom">
+          <DialogActions className="gc360_photo_dialog_box_actions_bottom">
             <Button
               variant="contained"
               onClick={handleCloseCancel}
@@ -524,48 +530,102 @@ const Identification = ({ profile, myProf, network, createSnackbar }) => {
             >
               Cancel
             </Button>
-            <Tooltip
-              classes={{ tooltip: 'tooltip' }}
-              id="tooltip-submit"
-              title="Crop to current region and submit"
-            >
-              <Button
-                variant="contained"
-                onClick={handleCloseSubmit}
-                disabled={!showCropper}
-                style={showCropper ? style.button : style.button.hidden}
+            {showCropper && (
+              <Tooltip
+                classes={{ tooltip: 'tooltip' }}
+                id="tooltip-submit"
+                title="Crop to current region and submit"
               >
-                Submit
-              </Button>
-            </Tooltip>
+                <Button
+                  variant="contained"
+                  onClick={handleCloseSubmit}
+                  disabled={!showCropper}
+                  style={showCropper ? style.button : style.button.hidden}
+                >
+                  Submit
+                </Button>
+              </Tooltip>
+            )}
           </DialogActions>
         </div>
       </Dialog>
     );
   }
 
+  const todaysDate = new Date();
+  const isAprilFools = todaysDate.getMonth() === 3 && todaysDate.getDate() === 1;
+  const profileTitleAprilFools = userProfile?.Title
+    ? userProfile.Title.charAt(0).toUpperCase() +
+      userProfile.Title.slice(1).toLowerCase() +
+      '. ' +
+      userProfile.LastName
+    : '';
+
   return (
-    <div className="identification-card">
-      <Grid container className="identification-card-header">
-        {userProfile && <CardHeader title={`${userProfile.FirstName}'s Profile`} />}
+    <div className={styles.identification_card}>
+      <Grid container className={styles.identification_card_header}>
+        {userProfile &&
+          (isStudent ? (
+            <CardHeader
+              title={`${
+                isAprilFools
+                  ? profileTitleAprilFools
+                  : userProfile.NickName
+                  ? userProfile.NickName
+                  : userProfile.FirstName
+              }'s Profile`}
+            />
+          ) : (
+            <CardHeader
+              title={`${userProfile.NickName ? userProfile.NickName : userProfile.FirstName} ${
+                userProfile.LastName
+              }'s Profile`}
+            />
+          ))}
         {!userProfile && <CardHeader title="My Personal Profile" />}
       </Grid>
 
-      <div className="identification-card-content">
+      <div className={styles.identification_card_content}>
         {/* SHOWS THE CARD'S CONTENT IF THE GIVEN USER'S INFORMATION IS AVAILABLE. OTHERWISE A LOADER */}
         {userProfile && (defaultUserImage || preferredUserImage) ? (
-          <Grid container className="identification-card-content-card" justify="center">
+          <Grid
+            container
+            className={styles.identification_card_content_card}
+            justifyContent="center"
+          >
             <Grid
               container
-              className="identification-card-content-card-container"
+              className={styles.identification_card_content_card_container}
               alignItems="center"
-              justify="space-evenly"
+              justifyContent="space-evenly"
             >
-              <Grid item className="identification-card-content-card-container-photo">
-                <div className="identification-card-content-card-container-photo-main">
-                  <div className="identification-card-content-card-container-photo-main-container">
+              <Grid item className={styles.identification_card_content_card_container_photo}>
+                <div
+                  className={styles.identification_card_content_card_container_photo_main}
+                  style={
+                    cliftonColor
+                      ? {
+                          // border: '0.5rem solid' + cliftonColor,
+                          border: '10px solid transparent',
+                          boxSizing: 'content-box',
+                          margin: '-1rem',
+                          background:
+                            '-webkit-linear-gradient(135deg, #fff, ' +
+                            cliftonColor +
+                            ') border-box',
+                        }
+                      : null
+                  }
+                >
+                  <div
+                    className={
+                      styles.identification_card_content_card_container_photo_main_container
+                    }
+                  >
                     <img
-                      className="identification-card-content-card-container-photo-main-container-image"
+                      className={
+                        styles.identification_card_content_card_container_photo_main_container_image
+                      }
                       src={`data:image/jpg;base64,${
                         // Checks to see if the default and preferred photos should switch between bubbles
                         isPhotosSwitched
@@ -583,7 +643,9 @@ const Identification = ({ profile, myProf, network, createSnackbar }) => {
                     {network === 'online' && myProf && (
                       <Typography
                         variant="body1"
-                        className="identification-card-content-card-container-photo-main-container-tile-bar"
+                        className={
+                          styles.identification_card_content_card_container_photo_main_container_tile_bar
+                        }
                       >
                         Photo Options
                       </Typography>
@@ -592,14 +654,16 @@ const Identification = ({ profile, myProf, network, createSnackbar }) => {
                   {network === 'online' && myProf && (
                     <div
                       onClick={handlePhotoOpen}
-                      className="identification-card-content-card-container-photo-main-button"
+                      className={
+                        styles.identification_card_content_card_container_photo_main_button
+                      }
                     ></div>
                   )}
                 </div>
                 {preferredUserImage && defaultUserImage && (
-                  <div className="identification-card-content-card-container-photo-side">
+                  <div className={styles.identification_card_content_card_container_photo_side}>
                     <img
-                      className="identification-card-content-card-container-photo-side-image"
+                      className={styles.identification_card_content_card_container_photo_side_image}
                       src={`data:image/jpg;base64,${
                         // Checks to see if the default and preferred photos should switch between bubbles
                         isPhotosSwitched
@@ -612,13 +676,15 @@ const Identification = ({ profile, myProf, network, createSnackbar }) => {
                     />
                     <div
                       onClick={handlePhotoSwitch}
-                      className="identification-card-content-card-container-photo-side-button"
+                      className={
+                        styles.identification_card_content_card_container_photo_side_button
+                      }
                     ></div>
                   </div>
                 )}
               </Grid>
 
-              <Grid item className="identification-card-content-card-container-info">
+              <Grid item className={styles.identification_card_content_card_container_info}>
                 <SocialMediaLinks
                   profile={profile}
                   myProf={myProf}
@@ -627,43 +693,31 @@ const Identification = ({ profile, myProf, network, createSnackbar }) => {
                 <Grid
                   item
                   xs={12}
-                  className="identification-card-content-card-container-info-class"
+                  className={styles.identification_card_content_card_container_info_class}
                 >
                   {userProfile.Class && <Typography>{userProfile.Class}</Typography>}
                 </Grid>
 
-                <Grid item xs={12} className="identification-card-content-card-container-info-name">
+                <Grid
+                  item
+                  xs={12}
+                  className={styles.identification_card_content_card_container_info_name}
+                >
                   <Typography variant="h6" paragraph>
-                    {userProfile.Title &&
-                    userProfile.Title !== '' &&
-                    userProfile.PersonType === 'fac'
-                      ? // If the user has a title
-                        hasNickName
-                        ? // If the user has a title and a nickname
-                          userProfile.Title +
-                          ' ' +
-                          userProfile.fullName +
-                          ' (' +
-                          userProfile.NickName +
-                          ')'
-                        : // If the user has a title and no nickname
-                          userProfile.Title + ' ' + userProfile.fullName
-                      : // If the user doesn't have a title
-                      hasNickName
-                      ? // If the user doesn't have a title but has a nickname
-                        userProfile.fullName + ' (' + userProfile.NickName + ')'
-                      : // If the user doesn't have a title or a nickname
-                        userProfile.fullName}
-                    {/* {hasNickName
-                        ? userProfile.fullName + ' (' + userProfile.NickName + ')'
-                        : userProfile.fullName} */}
+                    {`${
+                      userProfile.Title && userProfile.PersonType === 'fac'
+                        ? `${userProfile.Title} `
+                        : ''
+                    }${userProfile.FirstName}${hasNickname ? ` (${userProfile.NickName})` : ''} ${
+                      userProfile.LastName
+                    }${hasMaidenName ? ` (${userProfile.MaidenName})` : ''}`}
                   </Typography>
                 </Grid>
                 {userProfile.JobTitle && userProfile.JobTitle !== '' && (
                   <Grid
                     item
                     xs={12}
-                    className="identification-card-content-card-container-info-job-title"
+                    className={styles.identification_card_content_card_container_info_job_title}
                   >
                     <Typography variant="h6" paragraph>
                       {userProfile.JobTitle}
@@ -673,11 +727,19 @@ const Identification = ({ profile, myProf, network, createSnackbar }) => {
                 <Grid
                   item
                   xs={12}
-                  className="identification-card-content-card-container-info-email"
+                  className={styles.identification_card_content_card_container_info_email}
                 >
                   <a href={`mailto:${userProfile.Email}`}>
-                    <div className="identification-card-content-card-container-info-email-container">
-                      <EmailIcon className="identification-card-content-card-container-info-email-container-icon" />
+                    <div
+                      className={
+                        styles.identification_card_content_card_container_info_email_container
+                      }
+                    >
+                      <EmailIcon
+                        className={
+                          styles.identification_card_content_card_container_info_email_container_icon
+                        }
+                      />
                       <Typography paragraph>{userProfile.Email}</Typography>
                     </div>
                   </a>
@@ -694,10 +756,10 @@ const Identification = ({ profile, myProf, network, createSnackbar }) => {
         {userProfile && network === 'online' && myProf && (
           <Link
             to={`/profile/${userProfile.AD_Username}`}
-            className="identification-card-content-public-profile-link"
+            className={styles.identification_card_content_public_profile_link}
           >
             <Button
-              className="identification-card-content-public-profile-link-button"
+              className={styles.identification_card_content_public_profile_link_button}
               variant="contained"
             >
               View My Public Profile

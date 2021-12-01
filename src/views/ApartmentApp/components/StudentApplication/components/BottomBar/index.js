@@ -1,47 +1,41 @@
-import React from 'react';
-import { Backdrop, Card, CardContent, Grid, Typography } from '@material-ui/core/';
+import { Card, CardContent, Grid, Typography } from '@material-ui/core/';
 import DeleteIcon from '@material-ui/icons/Delete';
 import PublishIcon from '@material-ui/icons/Publish';
 import SaveIcon from '@material-ui/icons/Save';
 import DynamicButton from 'components/DynamicButton';
-import GordonDialogBox from 'components/GordonDialogBox';
-import GordonLoader from 'components/Loader';
+// @TODO CSSMODULES - outside directory
+import styles from '../../../../ApartmentApp.module.css';
 
-const deleteAlertText = (
-  <span>
-    Are you sure you want to delete this application?
-    <br />
-    This action cannot be undone.
-  </span>
-);
-
-// TODO: Improve this text for the users
-const submitAlertText = (
-  <span>
-    Please confirm that all the information you have entered is valid
-    <br />
-    Click "Accept" below to submit this application
-  </span>
-);
-
+/**
+ * Renders the bottom bar for the apartment application page
+ *
+ * @param {Object} props The React component props
+ * @param {boolean} props.applicationCardsOpen Indicates whether the application cards are open and visible
+ * @param {number} props.applicationID Application ID number of this application
+ * @param {boolean} props.canEditApplication Indicates whether the current using is authorized to edit the application
+ * @param {boolean | string} props.deleting Status of delete operation
+ * @param {Object} props.disableSubmit boolean to disable the submit button
+ * @param {boolean | string} props.saving Status of save operation
+ * @param {boolean | string} props.submitStatus Status of submit operation
+ * @param {boolean} props.unsavedChanges Indicates whether the page currently contains unsaved changes
+ * @param {Function} props.onDeleteButtonClick Callback
+ * @param {Function} props.onSaveButtonClick Callback
+ * @param {Function} props.onShowApplication Callback
+ * @param {Function} props.onSubmitButtonClick Callback for the submit application button
+ * @returns {JSX.Element} JSX Element for the bottom bar
+ */
 const BottomBar = ({
   applicationCardsOpen,
   applicationID,
   canEditApplication,
-  deleteDialogOpen,
   deleting,
   disableSubmit,
   saving,
-  submitDialogOpen,
   submitStatus,
   unsavedChanges,
-  onCloseDialog,
-  onCloseOkay,
-  onDeleteAppAccepted,
   onDeleteButtonClick,
   onSaveButtonClick,
   onShowApplication,
-  onSubmitAppAccepted,
   onSubmitButtonClick,
 }) => {
   let dynamicContent = {
@@ -51,6 +45,7 @@ const BottomBar = ({
     itemProps: {},
   };
 
+  //TODO: Refactor this to do something more compact like the dialogProps in StudentApplication
   if (submitStatus === 'success') {
     dynamicContent = {
       primaryText: 'The application was submitted successfully!',
@@ -102,14 +97,14 @@ const BottomBar = ({
     } else if (unsavedChanges) {
       dynamicContent = { primaryText: 'You have unsaved changes.' };
     } else {
-      dynamicContent = { primaryText: 'All changes to be saved.' };
+      dynamicContent = { primaryText: 'All changes have been saved.' };
     }
   }
 
   return (
-    <Card className={'sticky-page-bottom-bar'} variant="outlined">
+    <Card className={styles.sticky_page_bottom_bar} variant="outlined">
       <CardContent>
-        <Grid container direction="row" justify="flex-end" spacing={2}>
+        <Grid container direction="row" justifyContent="flex-end" spacing={2}>
           <Grid item xs={12} sm>
             <Typography variant="body1" {...dynamicContent.itemProps}>
               {dynamicContent.primaryText}
@@ -130,7 +125,7 @@ const BottomBar = ({
             )}
             <Grid item xs>
               <DynamicButton
-                className={'delete-button'}
+                className={styles.delete_button}
                 disabled={!canEditApplication || !applicationID}
                 buttonText={'Delete'}
                 startIcon={<DeleteIcon />}
@@ -153,7 +148,7 @@ const BottomBar = ({
                 <Grid item xs>
                   <DynamicButton
                     color={'primary'}
-                    disabled={!canEditApplication || disableSubmit}
+                    disabled={!canEditApplication || Boolean(disableSubmit)}
                     buttonText={'Submit'}
                     startIcon={<PublishIcon />}
                     status={submitStatus}
@@ -163,35 +158,6 @@ const BottomBar = ({
               </>
             )}
           </Grid>
-          <Backdrop open={saving === true || submitStatus === true}>
-            <GordonLoader />
-          </Backdrop>
-          <GordonDialogBox
-            open={deleteDialogOpen}
-            onClose={onCloseDialog}
-            labelledby={'submit-application-dialog'}
-            describedby={'confirm-application'}
-            title={'Delete apartment application?'}
-            text={deleteAlertText}
-            buttonClicked={onDeleteAppAccepted}
-            buttonName={'Accept'}
-            cancelButtonClicked={onCloseOkay}
-            cancelButtonName={'Cancel'}
-            severity={'warning'}
-          />
-          <GordonDialogBox
-            open={submitDialogOpen}
-            onClose={onCloseDialog}
-            labelledby={'submit-application-dialog'}
-            describedby={'confirm-application'}
-            title={'Submit apartment application?'}
-            text={submitAlertText}
-            buttonClicked={onSubmitAppAccepted}
-            buttonName={'Accept'}
-            cancelButtonClicked={onCloseOkay}
-            cancelButtonName={'Cancel'}
-            severity={'warning'}
-          />
         </Grid>
       </CardContent>
     </Card>

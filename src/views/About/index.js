@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { gordonColors } from 'theme';
-import versionService from 'services/version';
+import { Button, Card, CardContent, CardHeader, Grid, Typography } from '@material-ui/core';
 import { projectName } from 'project-name';
+import { Fragment, useEffect, useState } from 'react';
+import versionService from 'services/version';
+import { gordonColors } from 'theme';
+import styles from './About.module.css';
 import contributors from './contributors.json';
-import './about.css';
-
-import { Typography, Grid, Button, Card, CardHeader, CardContent } from '@material-ui/core';
+import origins from './origins.json';
 
 const About = () => {
   const [version, setVersion] = useState(null);
@@ -15,11 +15,11 @@ const About = () => {
   }, []);
 
   return (
-    <Grid container justify="center">
+    <Grid container justifyContent="center">
       <Grid item xs={12} lg={8}>
-        <Card className="about">
+        <Card className={styles.about}>
           <CardHeader
-            className="about-title"
+            className={styles.about_title}
             title="Conceived and Built at Gordon College"
             subheader="By Students for Students"
             titleTypographyProps={{ variant: 'h4' }}
@@ -27,9 +27,8 @@ const About = () => {
           <CardContent>
             <Card>
               <CardHeader
-                className="about-header"
-                title={`${projectName}: THE SCOTTIE FAIRE IN YOUR HAND`}
-                titleTypographyProps={{ variant: 'body1' }}
+                className={styles.about_header}
+                title={`${projectName}: For Students by Students`}
               />
               <CardContent>
                 <Typography variant="body1" component="ul" style={{ textAlign: 'start' }}>
@@ -46,12 +45,8 @@ const About = () => {
             </Card>
 
             <Card>
-              <CardHeader
-                className="about-header"
-                title="INSTITUTIONAL BENEFITS"
-                titleTypographyProps={{ variant: 'body1' }}
-              />
-              <CardContent className="about-content">
+              <CardHeader className={styles.about_header} title="Institutional Benefits" />
+              <CardContent>
                 <Typography variant="body1" component="ul">
                   <li>In-house Student Record relationship</li>
                   <li>
@@ -66,22 +61,36 @@ const About = () => {
             </Card>
 
             <Card>
-              <CardHeader
-                className="about-header"
-                title="ORIGINS"
-                titleTypographyProps={{ variant: 'body1' }}
-              />
-              <CardContent className="about-content">
-                {contributors.map((section) => {
+              <CardHeader className={styles.about_header} title="Origins" />
+              <CardContent>
+                {origins.map((section) => {
                   return (
-                    <React.Fragment key={section.title}>
+                    <Fragment key={section.title}>
                       <Typography variant="subtitle1" gutterBottom>
                         <strong>{section.title}</strong>
                       </Typography>
-                      <Typography variant="body2" paragraph className="about-contributors">
+                      <Typography variant="body2" paragraph className={styles.about_Origins}>
                         {section.body}
                       </Typography>
-                    </React.Fragment>
+                    </Fragment>
+                  );
+                })}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className={styles.about_header} title="GoCo Tech Lab Developers" />
+              <CardContent>
+                {contributors.map((section) => {
+                  return (
+                    <Fragment key={section.title}>
+                      <Typography variant="subtitle1" gutterBottom>
+                        <strong>{section.title}</strong>
+                      </Typography>
+                      <Typography variant="body2" paragraph className={styles.about_contributors}>
+                        {section.body}
+                      </Typography>
+                    </Fragment>
                   );
                 })}
               </CardContent>
@@ -96,7 +105,7 @@ const About = () => {
         </Typography>
         <hr />
         <Typography variant="body2" paragraph>
-          Api Version - {version}
+          Api Version - {version} UTC
         </Typography>
       </Grid>
     </Grid>

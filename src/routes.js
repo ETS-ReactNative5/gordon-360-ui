@@ -1,7 +1,6 @@
 import About from './views/About';
-import ActivitiesAll from './views/ActivitiesAll';
-//import ActivityEdit from './views/ActivityEdit';
-import ActivityProfile from './views/ActivityProfile';
+import InvolvementsAll from './views/InvolvementsAll';
+import InvolvementProfile from './views/InvolvementProfile';
 import Home from './views/Home';
 import WellnessCheck from './views/WellnessCheck';
 import ApartmentApp from './views/ApartmentApp';
@@ -20,9 +19,10 @@ import Timesheets from './views/Timesheets';
 import BannerSubmission from './views/BannerSubmission';
 import News from './views/News';
 import Page404 from './views/Page404';
+import AcademicCheckIn from './views/AcademicCheckIn';
 
 // Route order must be from most specific to least specific (i.e. `/user/:username` before `/user`)
-export default [
+const routes = [
   {
     name: 'Home',
     path: '/',
@@ -46,13 +46,13 @@ export default [
   },
   {
     name: 'Involvement Profile',
-    path: '/activity/:sessionCode/:activityCode',
-    component: ActivityProfile,
+    path: '/activity/:sessionCode/:involvementCode',
+    component: InvolvementProfile,
   },
   {
     name: 'Involvements',
     path: '/involvements',
-    component: ActivitiesAll,
+    component: InvolvementsAll,
   },
   {
     name: 'Help',
@@ -95,6 +95,11 @@ export default [
     component: MyProfile,
   },
   {
+    name: 'Academic Check In',
+    path: '/academiccheckin',
+    component: AcademicCheckIn,
+  },
+  {
     name: 'People',
     path: '/people',
     component: PeopleSearch,
@@ -130,3 +135,5 @@ export default [
     component: Page404,
   },
 ];
+
+export default routes;

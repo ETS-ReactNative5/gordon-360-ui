@@ -1,28 +1,28 @@
 import {
   Button,
   Card,
+  CardContent,
   Dialog,
   DialogActions,
   DialogContent,
   DialogContentText,
   DialogTitle,
-  CardContent,
   Grid,
   Typography,
   withWidth,
 } from '@material-ui/core';
-import React, { Component, Fragment } from 'react';
+import Login from 'components/LoginDialogue';
+import 'cropperjs/dist/cropper.css';
+import { Component, createRef, Fragment } from 'react';
+import Cropper from 'react-cropper';
 import Dropzone from 'react-dropzone';
+import errorLog from 'services/errorLog';
+import user from 'services/user';
 import { gordonColors } from 'theme';
+import styles from './IDUploader.module.css';
 import IdCardDefault from './image-default.png';
 import IdCardGreen from './image-green.png';
 import IdCardTop from './image-top.png';
-import Cropper from 'react-cropper';
-import 'cropperjs/dist/cropper.css';
-import './IDUploader.css';
-import user from 'services/user';
-import errorLog from 'services/errorLog';
-import Login from 'views/Login';
 
 const CROP_DIM = 1200; // pixels
 class IDUploader extends Component {
@@ -39,7 +39,7 @@ class IDUploader extends Component {
       files: [],
       IdCardPlaceholder: IdCardDefault,
     };
-    this.cropperRef = React.createRef();
+    this.cropperRef = createRef();
   }
 
   handleUploadPhoto = () => {
@@ -237,7 +237,7 @@ class IDUploader extends Component {
           <Grid item xs={12} md={6} lg={8}>
             <Card>
               <CardContent>
-                <Grid container justify="center" direction="column">
+                <Grid container justifyContent="center" direction="column">
                   <Grid item align="center">
                     <Typography align="center" variant="h6" style={{ fontWeight: 'bold' }}>
                       ID Photo Guidelines
@@ -266,40 +266,34 @@ class IDUploader extends Component {
             </Card>
           </Grid>
 
-          <Grid item xs={12} md={6} lg={4} justify="center">
-            <Grid container justify="center">
+          <Grid item xs={12} md={6} lg={4}>
+            <Grid container justifyContent="center">
               <Card raised={true}>
                 <Grid item style={{ margin: '10px' }}>
-                  <div>
-                    <img
-                      src={IdCardTop}
-                      alt="ID card top with Gordon College logo."
-                      className="placeholder-id"
-                      style={{ maxWidth: '100%', maxHeight: '100%' }}
-                    />
-                  </div>
+                  <img
+                    src={IdCardTop}
+                    alt="ID card top with Gordon College logo."
+                    className={styles.placeholder_id}
+                    style={{ maxWidth: '100%', maxHeight: '100%' }}
+                  />
                 </Grid>
                 <Grid item>
                   <Grid container style={{ width: '406px' }}>
                     <Grid item style={{ marginLeft: '10px', width: '320px', marginBottom: '5px' }}>
-                      <div>
-                        <img
-                          src={this.state.IdCardPlaceholder}
-                          alt="Placeholder ID."
-                          className="placeholder-id"
-                          style={{ maxWidth: '100%', maxHeight: '100%' }}
-                        />
-                      </div>
+                      <img
+                        src={this.state.IdCardPlaceholder}
+                        alt="Placeholder ID."
+                        className={styles.placeholder_id}
+                        style={{ maxWidth: '100%', maxHeight: '100%' }}
+                      />
                     </Grid>
                     <Grid item style={{ marginLeft: '7px', width: '53px', marginBottom: '5px' }}>
-                      <div>
-                        <img
-                          src={IdCardGreen}
-                          alt="Colored bar with text 'student'."
-                          className="placeholder-id"
-                          style={{ maxWidth: '100%', maxHeight: '100%' }}
-                        />
-                      </div>
+                      <img
+                        src={IdCardGreen}
+                        alt="Colored bar with text 'student'."
+                        className={styles.placeholder_id}
+                        style={{ maxWidth: '100%', maxHeight: '100%' }}
+                      />
                     </Grid>
                   </Grid>
                 </Grid>
@@ -310,7 +304,7 @@ class IDUploader extends Component {
       );
     } else {
       content = (
-        <Grid container justify="center">
+        <Grid container justifyContent="center">
           <Grid item xs={12} md={8}>
             <Card>
               <CardContent
@@ -335,7 +329,7 @@ class IDUploader extends Component {
                 >
                   Login
                 </Button>*/}
-                <Login onLogIn={this.props.onLogIn} />
+                <Login />
               </CardContent>
             </Card>
           </Grid>
@@ -344,7 +338,7 @@ class IDUploader extends Component {
     }
 
     return (
-      <Grid container justify="center" spacing="2">
+      <Grid container justifyContent="center" spacing={2}>
         {content}
 
         <Dialog
@@ -354,12 +348,12 @@ class IDUploader extends Component {
           aria-labelledby="alert-dialog-slide-title"
           aria-describedby="alert-dialog-slide-description"
         >
-          <div className="gc360-id-dialog">
-            <DialogTitle className="gc360-id-dialog_title" id="simple-dialog-title">
+          <div className={styles.gc360_id_dialog}>
+            <DialogTitle className={styles.gc360_id_dialog_title} id="simple-dialog-title">
               Update ID Picture
             </DialogTitle>
-            <DialogContent className="gc360-id-dialog_content">
-              <DialogContentText className="gc360-id-dialog_content_text">
+            <DialogContent className={styles.gc360_id_dialog_content}>
+              <DialogContentText className={styles.gc360_id_dialog_content_text}>
                 {this.props.width === 'md' || this.props.width === 'sm' || this.props.width === 'xs'
                   ? 'Tap Image to Browse Files'
                   : 'Drag & Drop Picture, or Click to Browse Files'}
@@ -373,26 +367,26 @@ class IDUploader extends Component {
                   accept="image/jpeg, image/jpg, image/png"
                 >
                   {({ getRootProps, getInputProps }) => (
-                    <div className="gc360-id-dialog_content_dropzone" {...getRootProps()}>
+                    <div className={styles.gc360_id_dialog_content_dropzone} {...getRootProps()}>
                       <input {...getInputProps()} />
                       <img
-                        className="gc360-id-dialog_content_dropzone_img"
+                        className={styles.gc360_id_dialog_content_dropzone_img}
                         src={`data:image/jpg;base64,${this.state.image}`}
                         alt=""
-                        style={{ 'max-width': '140px', 'max-height': '140px' }}
+                        style={{ maxWidth: '140px', maxHeight: '140px' }}
                       />
                     </div>
                   )}
                 </Dropzone>
               )}
               {preview && (
-                <div className="gc360-id-dialog_content_cropper">
+                <div className={styles.gc360_id_dialog_content_cropper}>
                   <Cropper
                     ref={this.cropperRef}
                     src={preview}
                     style={{
-                      'max-width': this.maxCropPreviewWidth(),
-                      'max-height': this.maxCropPreviewWidth() / this.state.cropperData.aspectRatio,
+                      maxWidth: this.maxCropPreviewWidth(),
+                      maxHeight: this.maxCropPreviewWidth() / this.state.cropperData.aspectRatio,
                     }}
                     autoCropArea={1}
                     viewMode={3}
@@ -413,13 +407,13 @@ class IDUploader extends Component {
                   variant="contained"
                   onClick={() => this.setState({ preview: null })}
                   style={style.button}
-                  className="gc360-id-dialog_content_button"
+                  className={styles.gc360_id_dialog_content_button}
                 >
                   Choose Another Image
                 </Button>
               )}
             </DialogContent>
-            <DialogActions className="gc360-id-dialog_actions">
+            <DialogActions className={styles.gc360_id_dialog_actions}>
               <Button variant="contained" onClick={this.handleCloseCancel} style={style.button}>
                 Cancel
               </Button>
@@ -442,11 +436,10 @@ class IDUploader extends Component {
           keepMounted
           aria-labelledby="alert-dialog-slide-title"
           aria-describedby="alert-dialog-slide-description"
-          maxWidth="false"
         >
           <DialogTitle id="simple-dialog-title">Photo Submitted</DialogTitle>
           <DialogContent>
-            <DialogContentText className="submittedText">
+            <DialogContentText className={styles.submittedText}>
               We got your photo!
               <br />
               You should now see it on your MyProfile page, but it may
@@ -457,7 +450,7 @@ class IDUploader extends Component {
             </DialogContentText>
           </DialogContent>
           <DialogActions>
-            <Grid container spacing={2} justify="flex-end">
+            <Grid container spacing={2} justifyContent="flex-end">
               <Grid item />
               <Grid item>
                 <Button variant="contained" onClick={this.handleCloseOkay} style={style.button}>
@@ -472,16 +465,15 @@ class IDUploader extends Component {
           keepMounted
           aria-labelledby="alert-dialog-slide-title"
           aria-describedby="alert-dialog-slide-description"
-          maxWidth="false"
         >
           <DialogTitle id="simple-dialog-title">Photo Submitted</DialogTitle>
           <DialogContent>
-            <DialogContentText className="submittedText">
+            <DialogContentText className={styles.submittedText}>
               Looks like something went wrong on our end! <br /> Try resubmitting your photo.
             </DialogContentText>
           </DialogContent>
           <DialogActions>
-            <Grid container spacing={2} justify="flex-end">
+            <Grid container spacing={2} justifyContent="flex-end">
               <Grid item />
               <Grid item>
                 <Button variant="contained" onClick={this.handleCloseOkay} style={style.button}>

@@ -1,9 +1,9 @@
-import React, { Fragment } from 'react';
+import { Component, Fragment } from 'react';
 import { gordonColors } from 'theme';
 
 import { Dialog, DialogTitle, DialogActions, Button } from '@material-ui/core';
 
-export default class RemoveScheduleDialog extends React.Component {
+export default class RemoveScheduleDialog extends Component {
   constructor(props) {
     super(props);
 
@@ -33,8 +33,8 @@ export default class RemoveScheduleDialog extends React.Component {
           aria-labelledby="alert-dialog-slide-title"
           aria-describedby="alert-dialog-slide-description"
         >
-          <DialogTitle className="title">Are you sure about removing this event?</DialogTitle>
-          <DialogActions className="buttons">
+          <DialogTitle>Are you sure about removing this event?</DialogTitle>
+          <DialogActions>
             <Button
               onClick={this.props.handleRemoveMyScheduleClose}
               variant="contained"

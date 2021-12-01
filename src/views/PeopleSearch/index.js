@@ -1,48 +1,56 @@
-import React, { Component } from 'react';
 import {
   Button,
   Card,
+  CardActions,
   CardContent,
   CardHeader,
-  CardActions,
   Checkbox,
   Collapse,
+  Fab,
   FormControl,
   FormControlLabel,
+  FormLabel,
   Grid,
   Input,
   InputLabel,
   MenuItem,
   Select,
+  Switch,
   TextField,
   Typography,
   withStyles,
 } from '@material-ui/core';
-import Media from 'react-media';
-import PersonIcon from '@material-ui/icons/Person';
 import AddIcon from '@material-ui/icons/Add';
-import {
-  FaHeart,
-  FaBriefcase,
-  FaBuilding,
-  FaBook,
-  FaGlobeAmericas,
-  FaSchool,
-} from 'react-icons/fa';
 import HomeIcon from '@material-ui/icons/Home';
 import CityIcon from '@material-ui/icons/LocationCity';
+import PersonIcon from '@material-ui/icons/Person';
+import GordonOffline from 'components/GordonOffline';
+import GordonUnauthorized from 'components/GordonUnauthorized';
+import GordonLoader from 'components/Loader';
+import { Component } from 'react';
+import { IconContext } from 'react-icons';
+import {
+  FaBook,
+  FaBriefcase,
+  FaBuilding,
+  FaGlobeAmericas,
+  FaHeart,
+  FaPrint,
+  FaSchool,
+} from 'react-icons/fa';
+import Media from 'react-media';
+import ReactToPrint from 'react-to-print';
 import goStalk from 'services/goStalk';
 import user from 'services/user';
 import { gordonColors } from 'theme';
-import { ReactComponent as NoConnectionImage } from 'NoConnection.svg';
 import PeopleSearchResult from './components/PeopleSearchResult';
-import MobilePeopleSearchResult from './components/MobilePeopleSearchResult';
-import GordonLoader from 'components/Loader';
-import './peopleSearch.css';
+// @TODO CSSMODULES - outside directory
+import styles from './components/PeopleSearchResult/PeopleSearchResult.module.css';
 
-const styles = {
+const styles2 = {
   FontAwesome: {
     fontSize: 20,
+    margin: 2,
   },
   actions: {
     display: 'flex',
@@ -60,7 +68,7 @@ const styles = {
   headerStyle: {
     backgroundColor: gordonColors.primary.blue,
     color: '#FFF',
-    padding: '10px',
+    padding: '1.5rem 0.75rem',
   },
   colorSwitchBase: {
     color: gordonColors.neutral.lightGray,
@@ -76,10 +84,17 @@ const styles = {
   icon: {
     color: gordonColors.neutral.grayShades[900],
   },
+  printPeopleSearchButton: {
+    position: 'fixed',
+    margin: 0,
+    bottom: 'min(5vw, 4rem)',
+    right: 'max(2rem, 5vw)',
+    zIndex: 1,
+  },
 };
 
 const noResultsCard = (
-  <Grid item xs={12}>
+  <Grid item xs={12} direction="row" justifyContent="center" alignItems="center">
     <Card>
       <CardContent>
         <Typography variant="headline" align="center">
@@ -90,16 +105,61 @@ const noResultsCard = (
   </Grid>
 );
 
+const peopleSearchHeaderDesktop = (
+  <div style={styles2.headerStyle}>
+    <Grid container direction="row" alignItems="center">
+      <Grid item xs={5}>
+        <Typography variant="body2" style={{ marginLeft: '6rem' }}>
+          FULL NAME
+        </Typography>
+      </Grid>
+      <Grid item xs={5}>
+        <Typography variant="body2">TITLE/CLASS</Typography>
+      </Grid>
+      <Grid item xs={2}>
+        <Typography variant="body2">MAIL LOCATION</Typography>
+      </Grid>
+    </Grid>
+  </div>
+);
+
+const peopleSearchHeaderMobile = (
+  <div style={styles2.headerStyle}>
+    <Grid container direction="row" justifyContent="center">
+      <Grid item>
+        <Typography variant="body2">RESULTS</Typography>
+      </Grid>
+    </Grid>
+  </div>
+);
+
+const printPeopleSearchButton = (
+  <Fab variant="extended" color="primary" style={styles2.printPeopleSearchButton}>
+    <FaPrint />
+    <Media query="(min-width: 960px)">
+      <span style={styles2.printPeopleSearchButton__text}>&nbsp;&nbsp;Print Results</span>
+    </Media>
+  </Fab>
+);
+
+const searchPageTitle = (
+  <div align="center">
+    Search the
+    <b style={{ color: gordonColors.primary.cyan }}> Gordon </b>
+    Community
+  </div>
+);
+
+//Configuration constants
+const NUM_NONLAZY_IMAGES = 20; //The number of results for which images will be fetched immediately
+
 class PeopleSearch extends Component {
   constructor(props) {
     super(props);
 
     this.state = {
       personType: '',
-      nameExpanded: true,
-      academicsExpanded: false,
-      homeExpanded: false,
-      offDepExpanded: false,
+      advancedSearchExpanded: false,
 
       // arrays of table data from backend
       majors: [],
@@ -110,24 +170,32 @@ class PeopleSearch extends Component {
       buildings: [],
       halls: [],
 
-      // Keyboard string values
-      firstNameSearchValue: '',
-      lastNameSearchValue: '',
-      homeCitySearchValue: '',
-      // Drop-down menu values
-      majorSearchValue: '',
-      minorSearchValue: '',
-      hallSearchValue: '',
-      classTypeSearchValue: '',
-      stateSearchValue: '',
-      countrySearchValue: '',
-      departmentSearchValue: '',
-      buildingSearchValue: '',
+      // These values *must* be in the same order as services/goStalk.js search function
+      searchValues: {
+        includeStudent: true,
+        includeFacStaff: true,
+        includeAlumni: false,
+        firstName: '',
+        lastName: '',
+        major: '',
+        minor: '',
+        hall: '',
+        classType: '',
+        homeCity: '',
+        state: '',
+        country: '',
+        department: '',
+        building: '',
+      },
+
+      loading: true,
+
       // For April Fools:
       relationshipStatusValue: '',
 
-      includeAlumni: false,
-      peopleSearchResults: null,
+      displayLargeImage: false,
+
+      resultData: [], //Array of collected data to be created
       header: '',
       searchButtons: '',
 
@@ -135,180 +203,32 @@ class PeopleSearch extends Component {
     };
   }
 
-  makeHeader() {
-    let content = (
-      <Media query="(min-width: 960px)">
-        {(matches) =>
-          matches ? (
-            <div style={styles.headerStyle}>
-              <Grid container direction="row" alignItems="center">
-                <Grid item xs={1} />
-                <Grid item xs={2}>
-                  <Typography variant="body2" style={styles.headerStyle}>
-                    FIRST NAME
-                  </Typography>
-                </Grid>
-                <Grid item xs={2}>
-                  <Typography variant="body2" style={styles.headerStyle}>
-                    LAST NAME
-                  </Typography>
-                </Grid>
-                <Grid item xs={1}>
-                  <Typography variant="body2" style={styles.headerStyle}>
-                    TYPE
-                  </Typography>
-                </Grid>
-                <Grid item xs={3}>
-                  <Typography variant="body2" style={styles.headerStyle}>
-                    CLASS/JOB TITLE
-                  </Typography>
-                </Grid>
-                <Grid item xs={2}>
-                  <Typography variant="body2" style={styles.headerStyle}>
-                    @GORDON.EDU
-                    <br />
-                    MAIL LOCATION
-                  </Typography>
-                </Grid>
-              </Grid>
-            </div>
-          ) : (
-            <div style={styles.headerStyle}>
-              <Grid container direction="row" justify="center">
-                <Grid item>
-                  <Typography variant="body2" style={styles.headerStyle}>
-                    RESULTS
-                  </Typography>
-                </Grid>
-              </Grid>
-            </div>
-          )
-        }
-      </Media>
-    );
-    return content;
-  }
-
   componentDidUpdate() {
+    // Browser 'back' arrow
     window.onpopstate = () => {
       if (!window.location.href.includes('?')) {
-        window.location.reload();
-      } else {
-        this.goBackPage();
+        this.setState({ header: '', resultData: null });
       }
+      this.loadSearchParamsFromURL();
     };
   }
 
-  async goBackPage() {
-    const urlParams = new URLSearchParams(window.location.search);
-    var includeAlumni = urlParams.get('includeAlumni') || false;
-    var firstName = urlParams.get('firstName').trim() || '';
-    var lastName = urlParams.get('lastName').trim() || '';
-    var major = urlParams.get('major').trim() || '';
-    var minor = urlParams.get('minor').trim() || '';
-    var hall = urlParams.get('hall').trim() || '';
-    var classType = urlParams.get('classType').trim() || '';
-    var homeCity = urlParams.get('homeCity').trim() || '';
-    var state = urlParams.get('state').trim() || '';
-    var country = urlParams.get('country').trim() || '';
-    var department = urlParams.get('department').trim() || '';
-    var building = urlParams.get('building').trim() || '';
-
-    this.setState({
-      firstNameSearchValue: firstName,
-      lastNameSearchValue: lastName,
-      homeCitySearchValue: homeCity,
-      majorSearchValue: major,
-      minorSearchValue: minor,
-      hallSearchValue: hall,
-      classTypeSearchValue: classType,
-      stateSearchValue: state,
-      countrySearchValue: country,
-      departmentSearchValue: department,
-      buildingSearchValue: building,
-    });
-
-    if (
-      includeAlumni === false &&
-      firstName === '' &&
-      lastName === '' &&
-      major === '' &&
-      minor === '' &&
-      hall === '' &&
-      classType === '' &&
-      homeCity === '' &&
-      state === '' &&
-      country === '' &&
-      department === '' &&
-      building === ''
-    ) {
-      // do not search
-    } else {
-      this.setState({
-        header: <GordonLoader />,
-        peopleSearchResults: null,
-      });
-      let peopleSearchResults = [];
-      peopleSearchResults = await goStalk.search(
-        includeAlumni,
-        firstName,
-        lastName,
-        major,
-        minor,
-        hall,
-        classType,
-        homeCity,
-        state,
-        country,
-        department,
-        building,
-      );
-      if (peopleSearchResults.length === 0) {
-        this.setState({
-          peopleSearchResults: noResultsCard,
-          header: '',
-        });
-      } else {
-        this.setState({
-          peopleSearchResults: (
-            <Media query="(min-width: 960px)">
-              {(matches) =>
-                matches
-                  ? peopleSearchResults.map((person) => <PeopleSearchResult Person={person} />)
-                  : peopleSearchResults.map((person) => (
-                      <MobilePeopleSearchResult Person={person} />
-                    ))
-              }
-            </Media>
-          ),
-          header: this.makeHeader(),
-        });
-      }
-    }
-  }
-
   async componentDidMount() {
+    // this.setState({ loading: true });
     if (this.props.authentication) {
       try {
         const profile = await user.getProfileInfo();
         const personType = profile.PersonType;
-        const [
-          majors,
-          minors,
-          halls,
-          states,
-          countries,
-          departments,
-          buildings,
-        ] = await Promise.all([
-          goStalk.getMajors(),
-          goStalk.getMinors(),
-          goStalk.getHalls(),
-          goStalk.getStates(),
-          goStalk.getCountries(),
-          goStalk.getDepartments(),
-          goStalk.getBuildings(),
-        ]);
+        const [majors, minors, halls, states, countries, departments, buildings] =
+          await Promise.all([
+            goStalk.getMajors(),
+            goStalk.getMinors(),
+            goStalk.getHalls(),
+            goStalk.getStates(),
+            goStalk.getCountries(),
+            goStalk.getDepartments(),
+            goStalk.getBuildings(),
+          ]);
         this.setState({
           majors,
           minors,
@@ -319,124 +239,57 @@ class PeopleSearch extends Component {
           buildings,
           personType,
         });
+
+        if (personType.includes('alum')) {
+          this.setState({
+            searchValues: {
+              ...this.state.searchValues,
+              includeStudent: false,
+              includeAlumni: true,
+            },
+          });
+        }
       } catch (error) {
         // error
       }
 
       if (window.location.href.includes('?')) {
-        const urlParams = new URLSearchParams(window.location.search);
-        var includeAlumni = urlParams.get('includeAlumni') || false;
-        let firstName = urlParams.get('firstName').trim() || '';
-        let lastName = urlParams.get('lastName').trim() || '';
-        let major = urlParams.get('major').trim() || '';
-        let minor = urlParams.get('minor').trim() || '';
-        let hall = urlParams.get('hall').trim() || '';
-        let classType = urlParams.get('classType').trim() || '';
-        let homeCity = urlParams.get('homeCity').trim() || '';
-        let state = urlParams.get('state').trim() || '';
-        let country = urlParams.get('country').trim() || '';
-        let department = urlParams.get('department').trim() || '';
-        let building = urlParams.get('building').trim() || '';
-
-        this.setState({
-          firstNameSearchValue: firstName,
-          lastNameSearchValue: lastName,
-          homeCitySearchValue: homeCity,
-          majorSearchValue: major,
-          minorSearchValue: minor,
-          hallSearchValue: hall,
-          classTypeSearchValue: classType,
-          stateSearchValue: state,
-          countrySearchValue: country,
-          departmentSearchValue: department,
-          buildingSearchValue: building,
-        });
-
-        if (
-          includeAlumni === false &&
-          firstName === '' &&
-          lastName === '' &&
-          major === '' &&
-          minor === '' &&
-          hall === '' &&
-          classType === '' &&
-          homeCity === '' &&
-          state === '' &&
-          country === '' &&
-          department === '' &&
-          building === ''
-        ) {
-          // do not search
-        } else {
-          this.setState({
-            header: <GordonLoader />,
-            peopleSearchResults: null,
-          });
-          let peopleSearchResults = [];
-
-          peopleSearchResults = await goStalk.search(
-            includeAlumni,
-            firstName,
-            lastName,
-            major,
-            minor,
-            hall,
-            classType,
-            homeCity,
-            state,
-            country,
-            department,
-            building,
-          );
-
-          if (peopleSearchResults.length === 0) {
-            this.setState({
-              peopleSearchResults: noResultsCard,
-              header: '',
-            });
-          } else {
-            this.setState({
-              peopleSearchResults: (
-                <Media query="(min-width: 960px)">
-                  {(matches) =>
-                    matches
-                      ? peopleSearchResults.map((person) => <PeopleSearchResult Person={person} />)
-                      : peopleSearchResults.map((person) => (
-                          <MobilePeopleSearchResult Person={person} />
-                        ))
-                  }
-                </Media>
-              ),
-              header: this.makeHeader(),
-            });
-          }
-        }
+        this.loadSearchParamsFromURL();
+      } else {
+        this.updateURL();
       }
     }
+
+    this.setState({ loading: false });
   }
 
-  handleNameExpandClick = () => {
-    this.setState((state) => ({ nameExpanded: !state.nameExpanded }));
-  };
-  handleAcademicsExpandClick = () => {
+  async loadSearchParamsFromURL() {
+    const urlParams = new URLSearchParams(window.location.search);
+
+    this.setState({
+      searchValues: {
+        includeStudent: urlParams.get('includeStudent') === 'true' ? true : false,
+        includeFacStaff: urlParams.get('includeFacStaff') === 'true' ? true : false,
+        includeAlumni: urlParams.get('includeAlumni') || false,
+        firstName: urlParams.get('firstName')?.trim() || '',
+        lastName: urlParams.get('lastName')?.trim() || '',
+        major: urlParams.get('major')?.trim() || '',
+        minor: urlParams.get('minor')?.trim() || '',
+        hall: urlParams.get('hall')?.trim() || '',
+        classType: urlParams.get('classType')?.trim() || '',
+        homeCity: urlParams.get('homeCity')?.trim() || '',
+        state: urlParams.get('state')?.trim() || '',
+        country: urlParams.get('country')?.trim() || '',
+        department: urlParams.get('department')?.trim() || '',
+        building: urlParams.get('building')?.trim() || '',
+      },
+    });
+
+    this.search();
+  }
+  handleAdvancedSearchExpandClick = () => {
     this.setState((state) => ({
-      academicsExpanded: !state.academicsExpanded,
-      homeExpanded: false,
-      offDepExpanded: false,
-    }));
-  };
-  handleHomeExpandClick = () => {
-    this.setState((state) => ({
-      homeExpanded: !state.homeExpanded,
-      academicsExpanded: false,
-      offDepExpanded: false,
-    }));
-  };
-  handleOffDepExpandClick = () => {
-    this.setState((state) => ({
-      offDepExpanded: !state.offDepExpanded,
-      academicsExpanded: false,
-      homeExpanded: false,
+      advancedSearchExpanded: !state.advancedSearchExpanded,
     }));
   };
 
@@ -445,177 +298,207 @@ class PeopleSearch extends Component {
       relationshipStatusValue: e.target.value,
     });
   };
+  handleChangeIncludeStudent() {
+    this.setState({
+      searchValues: {
+        ...this.state.searchValues,
+        includeStudent: !this.state.searchValues.includeStudent,
+      },
+    });
+  }
+  handleChangeIncludeFacStaff() {
+    this.setState({
+      searchValues: {
+        ...this.state.searchValues,
+        includeFacStaff: !this.state.searchValues.includeFacStaff,
+      },
+    });
+  }
+  handleChangeIncludeAlumni() {
+    this.setState({
+      searchValues: {
+        ...this.state.searchValues,
+        includeAlumni: !this.state.searchValues.includeAlumni,
+      },
+    });
+  }
+
+  handleChangeDisplayLargeImages() {
+    this.setState({
+      ...this.state,
+      displayLargeImage: !this.state.displayLargeImage,
+    });
+    this.search();
+  }
+
   handleFirstNameInputChange = (e) => {
     this.setState({
-      firstNameSearchValue: e.target.value,
+      searchValues: { ...this.state.searchValues, firstName: e.target.value },
     });
   };
   handleLastNameInputChange = (e) => {
     this.setState({
-      lastNameSearchValue: e.target.value,
+      searchValues: { ...this.state.searchValues, lastName: e.target.value },
     });
   };
   handleMajorInputChange = (e) => {
     this.setState({
-      majorSearchValue: e.target.value,
+      searchValues: { ...this.state.searchValues, major: e.target.value },
     });
   };
   handleMinorInputChange = (e) => {
     this.setState({
-      minorSearchValue: e.target.value,
+      searchValues: { ...this.state.searchValues, minor: e.target.value },
     });
   };
   handleHallInputChange = (e) => {
     this.setState({
-      hallSearchValue: e.target.value,
+      searchValues: { ...this.state.searchValues, hall: e.target.value },
     });
   };
-  handleClassTypeInputChange = (event) => {
+  handleClassTypeInputChange = (e) => {
     this.setState({
-      classTypeSearchValue: event.target.value,
+      searchValues: { ...this.state.searchValues, classType: e.target.value },
     });
   };
   handleHomeCityInputChange = (e) => {
     this.setState({
-      homeCitySearchValue: e.target.value,
+      searchValues: { ...this.state.searchValues, homeCity: e.target.value },
     });
   };
   handleStateInputChange = (e) => {
     this.setState({
-      stateSearchValue: e.target.value,
+      searchValues: { ...this.state.searchValues, state: e.target.value },
     });
   };
   handleCountryInputChange = (e) => {
     this.setState({
-      countrySearchValue: e.target.value,
+      searchValues: { ...this.state.searchValues, country: e.target.value },
     });
   };
   handleDepartmentInputChange = (e) => {
     this.setState({
-      departmentSearchValue: e.target.value,
+      searchValues: { ...this.state.searchValues, department: e.target.value },
     });
   };
   handleBuildingInputChange = (e) => {
     this.setState({
-      buildingSearchValue: e.target.value,
+      searchValues: { ...this.state.searchValues, building: e.target.value },
     });
   };
 
-  handleChangeIncludeAlumni() {
-    this.setState({ includeAlumni: !this.state.includeAlumni });
-  }
+  //This is to prevent search from blank
+  canSearch = () => {
+    const { includeStudent, includeFacStaff, includeAlumni, ...valuesNeededForSearch } =
+      this.state.searchValues;
+    let result = Object.values(valuesNeededForSearch)
+      .map((x) =>
+        x
+          .toString()
+          .replace(/[^a-zA-Z0-9\s,.'-]/g, '')
+          .trim(),
+      )
+      .some((x) => x);
+    return result;
+  };
 
-  async search(
-    includeAlumni,
-    firstName,
-    lastName,
-    major,
-    minor,
-    hall,
-    classType,
-    homeCity,
-    state,
-    country,
-    department,
-    building,
-  ) {
-    if (
-      this.state.includeAlumni === false &&
-      this.state.firstNameSearchValue === '' &&
-      this.state.lastNameSearchValue === '' &&
-      this.state.classTypeSearchValue === '' &&
-      this.state.majorSearchValue === '' &&
-      this.state.minorSearchValue === '' &&
-      this.state.hallSearchValue === '' &&
-      this.state.classTypeSearchValue === '' &&
-      this.state.homeCitySearchValue === '' &&
-      this.state.stateSearchValue === '' &&
-      this.state.countrySearchValue === '' &&
-      this.state.departmentSearchValue === '' &&
-      this.state.buildingSearchValue === ''
-    ) {
-      // do not search
+  async search() {
+    if (!this.canSearch()) {
+      // do not search, only search if there are some non-blank non-false values
     } else {
       this.setState({
         header: <GordonLoader />,
-        peopleSearchResults: null,
+        resultData: [],
         academicsExpanded: false,
-        homeExpanded: false,
-        offDepExpanded: false,
+        searchValues: {
+          ...this.state.searchValues,
+          firstName: this.state.searchValues.firstName?.trim(),
+          lastName: this.state.searchValues.lastName?.trim(),
+          homeCity: this.state.searchValues.homeCity?.trim(),
+        },
       });
-      let peopleSearchResults = [];
-      peopleSearchResults = await goStalk.search(
-        includeAlumni,
-        firstName,
-        lastName,
-        major,
-        minor,
-        hall,
-        classType,
-        homeCity,
-        state,
-        country,
-        department,
-        building,
-      );
-
-      let searchParameters =
-        `?firstName=${firstName}&lastName=${lastName}` +
-        `&major=${major}&minor=${minor}&hall=${hall}&classType=${classType}` +
-        `&homeCity=${homeCity}&state=${state}&country=${country}` +
-        `&department=${department}&building=${building}&includeAlumni=${includeAlumni}`;
-      this.props.history.push(searchParameters);
-
-      if (peopleSearchResults.length === 0) {
+      let results = await goStalk.search(...Object.values(this.state.searchValues));
+      if (results.length === 0) {
         this.setState({
-          peopleSearchResults: noResultsCard,
+          resultData: noResultsCard,
           header: '',
         });
       } else {
         this.setState({
-          peopleSearchResults: (
-            <Media query="(min-width: 1025px)">
+          header: (
+            <Media query="(min-width: 960px)">
               {(matches) =>
-                matches
-                  ? peopleSearchResults.map((person) => <PeopleSearchResult Person={person} />)
-                  : peopleSearchResults.map((person) => (
-                      <MobilePeopleSearchResult Person={person} />
-                    ))
+                matches && !this.state.displayLargeImage
+                  ? peopleSearchHeaderDesktop
+                  : peopleSearchHeaderMobile
               }
             </Media>
           ),
-          header: this.makeHeader(),
+        });
+
+        this.setState({
+          resultData: (
+            <Media query="(min-width: 960px)">
+              {(matches) =>
+                results.map((person, index) => (
+                  <PeopleSearchResult
+                    key={person.AD_Username}
+                    Person={person}
+                    size={
+                      !matches ? 'single' : this.state.displayLargeImage ? 'largeImages' : 'full'
+                    }
+                    lazyImages={index > NUM_NONLAZY_IMAGES ? true : false}
+                  />
+                ))
+              }
+            </Media>
+          ),
         });
       }
+      // will set url redundantly if loading from url, but not a major issue
+      this.updateURL();
     }
   }
 
-  getDate = () => {
-    return new Date();
-  };
+  async updateURL() {
+    const searchParameters = Object.entries(this.state.searchValues)
+      .filter(([, value]) => value) // removes empty values
+      .map(([key, value]) => `${key}=${value}`) // [ 'firstName=value', 'state=texas']
+      .join('&'); // 'firstName=value&state=texas'
+
+    // If the page is still the people page & the searchParameters are not the same as previous search
+    if (
+      this.props.history.location.pathname === '/people' &&
+      this.props.history.location.search !== searchParameters
+    ) {
+      this.props.history.push(`?${searchParameters}`);
+    }
+  }
 
   handleEnterKeyPress = (event) => {
     if (event.key === 'Enter') {
-      this.search(
-        this.state.includeAlumni,
-        this.state.firstNameSearchValue,
-        this.state.lastNameSearchValue,
-        this.state.majorSearchValue,
-        this.state.minorSearchValue,
-        this.state.hallSearchValue,
-        this.state.classTypeSearchValue,
-        this.state.homeCitySearchValue,
-        this.state.stateSearchValue,
-        this.state.countrySearchValue,
-        this.state.departmentSearchValue,
-        this.state.buildingSearchValue,
-      );
+      this.search();
     }
   };
 
   render() {
     const { classes } = this.props;
-    let includeAlumniCheckbox;
+    let PeopleSearchCheckbox;
+
+    const printPeopleSearchHeader = (
+      <div className={styles2.printHeader} align="center" style={{ display: 'none' }}>
+        {/* show on print only */}
+        <style>{`@media print {.printHeader{display: block !important;}}`}</style>
+
+        <h1>{searchPageTitle}</h1>
+        <span>
+          Filters:{' '}
+          {window.location.search.substring(1).replaceAll('&', ', ').replaceAll('%20', ' ')}
+        </span>
+        <br />
+        <br />
+      </div>
+    );
 
     const majorOptions = this.state.majors.map((major) => (
       <MenuItem value={major} key={major}>
@@ -686,34 +569,72 @@ class PeopleSearch extends Component {
     const networkStatus = JSON.parse(localStorage.getItem('network-status')) || 'online';
 
     if (this.props.authentication) {
-      if (this.state.personType && !this.state.personType.includes('stu')) {
-        includeAlumniCheckbox = (
-          <Grid item xs={12} justify="left">
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={this.state.includeAlumni}
-                  onChange={() => {
-                    this.handleChangeIncludeAlumni();
-                  }}
+      PeopleSearchCheckbox = (
+        <Grid item xs={12} lg={6} align="center">
+          <Grid container alignItems="center" justifyContent="center">
+            <Grid item>
+              <FormLabel component="label">Include: &nbsp;</FormLabel>
+            </Grid>
+            {this.state.loading ? (
+              <Grid item>
+                <GordonLoader size={20} />
+              </Grid>
+            ) : (
+              <Grid item>
+                {this.state.personType && !this.state.personType.includes('alum') ? (
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={this.state.searchValues.includeStudent}
+                        onChange={() => {
+                          this.handleChangeIncludeStudent();
+                        }}
+                      />
+                    }
+                    label="Student"
+                  />
+                ) : null}
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={this.state.searchValues.includeFacStaff}
+                      onChange={() => {
+                        this.handleChangeIncludeFacStaff();
+                      }}
+                    />
+                  }
+                  label="Faculty/Staff"
                 />
-              }
-              label="Include Alumni"
-            />
+                {this.state.personType && !this.state.personType.includes('stu') ? (
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={this.state.searchValues.includeAlumni}
+                        onChange={() => {
+                          this.handleChangeIncludeAlumni();
+                        }}
+                      />
+                    }
+                    label="Alumni"
+                  />
+                ) : null}
+              </Grid>
+            )}
           </Grid>
-        );
-      }
+        </Grid>
+      );
 
       // April Fools
       let aprilFools = '';
-      if (this.getDate().getMonth() === 3 && this.getDate().getDate() === 1) {
+      const todaysDate = new Date();
+      if (todaysDate.getMonth() === 3 && todaysDate.getDate() === 1) {
         aprilFools = (
-          <Grid container spacing={2} alignItems="flex-end">
+          <Grid container spacing={2} alignItems="center">
             <Media
               query="(min-width: 600px)"
               render={() => (
-                <Grid item>
-                  <FaHeart style={styles.FontAwesome} Icon className={classes.icon} />
+                <Grid item style={{ marginBottom: '-4px' }}>
+                  <FaHeart style={styles2.FontAwesome} className={classes.icon} />
                 </Grid>
               )}
             />
@@ -779,31 +700,24 @@ class PeopleSearch extends Component {
 
       // Creates the PeopleSearch page depending on the status of the network found in local storage
       let PeopleSearch;
-      let searchPageTitle = (
-        <div>
-          Search the
-          <b style={{ color: gordonColors.primary.cyan }}> Gordon </b>
-          Community
-        </div>
-      );
 
       if (networkStatus === 'online') {
         PeopleSearch = (
-          <Grid container justify="center" spacing={6}>
-            <Grid item xs={12} md={8} direction="row">
+          <Grid container justifyContent="center" spacing={6}>
+            <Grid item xs={12} lg={10} xl={8}>
               <Card style={{ padding: '0 3vw' }}>
                 <CardContent>
                   <CardHeader title={searchPageTitle} />
 
                   {/* Search Section 1: General Info */}
-                  <Grid container spacing={2} direction="row" padded>
+                  <Grid container spacing={2} direction="row">
                     {/* First Name */}
                     <Grid item xs={12} sm={6}>
-                      <Grid container spacing={2} alignItems="flex-end">
+                      <Grid container spacing={2} alignItems="center">
                         <Media
                           query="(min-width: 600px)"
                           render={() => (
-                            <Grid item>
+                            <Grid item align="center" style={{ marginBottom: '-4px' }}>
                               <PersonIcon className={classes.icon} />
                             </Grid>
                           )}
@@ -812,47 +726,52 @@ class PeopleSearch extends Component {
                           <TextField
                             id="first-name"
                             label="First Name"
+                            type="search"
                             fullWidth
-                            value={this.state.firstNameSearchValue}
+                            value={this.state.searchValues.firstName}
                             onChange={this.handleFirstNameInputChange}
                             onKeyDown={this.handleEnterKeyPress}
+                            variant="filled"
                           />
                         </Grid>
                       </Grid>
                     </Grid>
                     {/* Last Name */}
                     <Grid item xs={12} sm={6}>
-                      <Grid container spacing={2} alignItems="flex-end">
+                      <Grid container spacing={2} alignItems="center">
                         <Grid item xs>
                           <TextField
                             id="last-name"
                             label="Last Name"
+                            type="search"
                             fullWidth
-                            value={this.state.lastNameSearchValue}
+                            value={this.state.searchValues.lastName}
                             onChange={this.handleLastNameInputChange}
                             onKeyDown={this.handleEnterKeyPress}
+                            variant="filled"
                           />
                         </Grid>
                       </Grid>
                     </Grid>
                     {/* Hall */}
                     <Grid item xs={12}>
-                      <Grid container spacing={2} alignItems="flex-end">
+                      <Grid container spacing={2} alignItems="center">
                         <Media
                           query="(min-width: 600px)"
                           render={() => (
-                            <Grid item>
-                              <FaBuilding style={styles.FontAwesome} className={classes.icon} />
+                            <Grid item style={{ marginBottom: '-4px' }}>
+                              <FaBuilding style={styles2.FontAwesome} className={classes.icon} />
                             </Grid>
                           )}
                         />
                         <Grid item xs>
-                          <FormControl fullWidth>
-                            <InputLabel>Hall</InputLabel>
+                          <FormControl variant="filled" fullWidth>
+                            <InputLabel id="residence-hall">Residence Hall</InputLabel>
                             <Select
-                              value={this.state.hallSearchValue}
+                              labelId="residence-hall"
+                              id="residence-hall"
+                              value={this.state.searchValues.hall}
                               onChange={this.handleHallInputChange}
-                              input={<Input id="hall" />}
                             >
                               <MenuItem label="All Halls" value="">
                                 <em>All Halls</em>
@@ -867,337 +786,476 @@ class PeopleSearch extends Component {
                     <Grid item xs={12}>
                       {aprilFools}
                     </Grid>
-                    {includeAlumniCheckbox}
+                    {PeopleSearchCheckbox}
+                    <Media
+                      query="(min-width: 960px)"
+                      render={() => (
+                        <Grid item xs={12} lg={6} align="center">
+                          <FormControlLabel
+                            control={
+                              <Switch
+                                checked={this.state.displayLargeImage}
+                                onChange={() => {
+                                  this.handleChangeDisplayLargeImages();
+                                }}
+                              />
+                            }
+                            label="Display Large Images"
+                          />
+                        </Grid>
+                      )}
+                    />
                   </Grid>
 
                   <br />
-
                   {/* Advanced Filtering */}
                   <Grid
                     container
                     spacing={2}
-                    justify="center"
+                    justifyContent="center"
                     alignItems="center"
                     style={{ padding: '8px' }}
                   >
                     <Grid item>
                       <Button
                         color="primary"
+                        backgroundColor="#ffffff"
                         style={
-                          this.state.majorSearchValue !== '' ||
-                          this.state.minorSearchValue !== '' ||
-                          this.state.classTypeSearchValue !== ''
+                          this.state.searchValues.major !== '' ||
+                          this.state.searchValues.minor !== '' ||
+                          this.state.searchValues.classType !== '' ||
+                          this.state.searchValues.homeCity !== '' ||
+                          this.state.searchValues.state !== '' ||
+                          this.state.searchValues.country !== '' ||
+                          this.state.searchValues.department !== '' ||
+                          this.state.searchValues.building !== ''
                             ? {
                                 backgroundColor: gordonColors.primary.cyan,
                                 color: '#ffffff',
                               }
                             : {}
                         }
-                        variant={this.state.academicsExpanded ? 'contained' : 'outlined'}
-                        onClick={this.handleAcademicsExpandClick}
+                        variant={this.state.advancedSearchExpanded ? 'contained' : 'outlined'}
+                        onClick={this.handleAdvancedSearchExpandClick}
                       >
                         <AddIcon fontSize="inherit" />
-                        Academic Info
-                      </Button>
-                    </Grid>
-                    <Grid item>
-                      <Button
-                        color="primary"
-                        style={
-                          this.state.homeCitySearchValue !== '' ||
-                          this.state.stateSearchValue !== '' ||
-                          this.state.countrySearchValue !== ''
-                            ? {
-                                backgroundColor: gordonColors.primary.cyan,
-                                color: '#ffffff',
-                              }
-                            : {}
-                        }
-                        variant={this.state.homeExpanded ? 'contained' : 'outlined'}
-                        onClick={this.handleHomeExpandClick}
-                      >
-                        <AddIcon fontSize="inherit" />
-                        Home Info
-                      </Button>
-                    </Grid>
-                    <Grid item>
-                      <Button
-                        color="primary"
-                        variant={this.state.offDepExpanded ? 'contained' : 'outlined'}
-                        onClick={this.handleOffDepExpandClick}
-                        style={
-                          this.state.departmentSearchValue !== '' ||
-                          this.state.buildingSearchValue !== ''
-                            ? {
-                                backgroundColor: gordonColors.primary.cyan,
-                                color: '#ffffff',
-                              }
-                            : {}
-                        }
-                      >
-                        <AddIcon fontSize="inherit" />
-                        Office Info
+                        More Search Options
                       </Button>
                     </Grid>
                   </Grid>
 
                   {/* Expandable search filters */}
-                  <Collapse
-                    in={this.state.academicsExpanded}
-                    timeout="auto"
-                    unmountOnExit
-                    style={styles.CardContent}
-                  >
-                    <Grid container spacing={2} alignItems="flex-end">
-                      <Media
-                        query="(min-width: 600px)"
-                        render={() => (
-                          <Grid item>
-                            <FaBook style={styles.FontAwesome} className={classes.icon} />
+                  {/* Advanced Search Filters: Student/Alumni */}
+                  <Grid container spacing={2} direction="row">
+                    <Grid item xs={12} sm={4} variant="filled">
+                      <Collapse
+                        in={this.state.advancedSearchExpanded}
+                        timeout="auto"
+                        unmountOnExit
+                        style={styles2.CardContent}
+                      >
+                        <br />
+                        <Grid>
+                          <Typography align="center" gutterBottom>
+                            <InputLabel
+                              style={{
+                                color:
+                                  this.state.searchValues.includeStudent ||
+                                  this.state.searchValues.includeAlumni
+                                    ? gordonColors.primary.blue
+                                    : gordonColors.neutral.lightGray,
+                              }}
+                            >
+                              {this.state.personType === 'stu' ? 'Student' : 'Student/Alumni'}
+                            </InputLabel>
+                          </Typography>
+                        </Grid>
+                        <Grid container spacing={2} alignItems="center">
+                          <Media
+                            query="(min-width: 600px)"
+                            render={() => (
+                              <Grid item xs="1" style={{ marginBottom: '-4px' }}>
+                                <IconContext.Provider
+                                  value={{
+                                    color:
+                                      this.state.searchValues.includeStudent ||
+                                      this.state.searchValues.includeAlumni
+                                        ? gordonColors.neutral.grayShades[900]
+                                        : gordonColors.neutral.lightGray,
+                                  }}
+                                >
+                                  <FaBook style={styles2.FontAwesome} className={classes.icon} />
+                                </IconContext.Provider>
+                              </Grid>
+                            )}
+                          />
+                          <Grid item xs={11}>
+                            <FormControl
+                              variant="filled"
+                              fullWidth
+                              className={
+                                this.state.searchValues.includeStudent ||
+                                this.state.searchValues.includeAlumni
+                                  ? null
+                                  : styles.disabled
+                              }
+                              disabled={
+                                !this.state.searchValues.includeAlumni &&
+                                !this.state.searchValues.includeStudent
+                              }
+                            >
+                              <InputLabel id="major">Major</InputLabel>
+                              <Select
+                                labelId="major"
+                                id="major"
+                                value={this.state.searchValues.major}
+                                onChange={this.handleMajorInputChange}
+                              >
+                                <MenuItem label="All Majors" value="">
+                                  <em>All Majors</em>
+                                </MenuItem>
+                                {majorOptions}
+                              </Select>
+                            </FormControl>
                           </Grid>
-                        )}
-                      />
-                      <Grid item xs={11}>
-                        <FormControl fullWidth>
-                          <InputLabel>Major</InputLabel>
-                          <Select
-                            value={this.state.majorSearchValue}
-                            onChange={this.handleMajorInputChange}
-                            input={<Input id="major" />}
+                        </Grid>
+                        <Grid container spacing={2} alignItems="center">
+                          <Media
+                            query="(min-width: 600px)"
+                            render={() => (
+                              <Grid item xs="1" style={{ marginBottom: '-4px' }}>
+                                <IconContext.Provider
+                                  value={{
+                                    color: this.state.searchValues.includeStudent
+                                      ? gordonColors.neutral.grayShades[900]
+                                      : gordonColors.neutral.lightGray,
+                                  }}
+                                >
+                                  <FaBook style={styles2.FontAwesome} className={classes.icon} />
+                                </IconContext.Provider>
+                              </Grid>
+                            )}
+                          />
+                          <Grid item xs={11}>
+                            <FormControl
+                              variant="filled"
+                              fullWidth
+                              className={this.state.searchValues.includeStudent ? null : 'disabled'}
+                              disabled={!this.state.searchValues.includeStudent}
+                            >
+                              <InputLabel id="minor">Minor</InputLabel>
+                              <Select
+                                labelId="minor"
+                                id="minor"
+                                value={this.state.searchValues.minor}
+                                onChange={this.handleMinorInputChange}
+                              >
+                                <MenuItem label="All Minors" value="">
+                                  <em>All Minors</em>
+                                </MenuItem>
+                                {minorOptions}
+                              </Select>
+                            </FormControl>
+                          </Grid>
+                        </Grid>
+                        <Grid container spacing={2} alignItems="center">
+                          <Media
+                            query="(min-width: 600px)"
+                            render={() => (
+                              <Grid item xs="1" style={{ marginBottom: '-4px' }}>
+                                <IconContext.Provider
+                                  value={{
+                                    color: this.state.searchValues.includeStudent
+                                      ? gordonColors.neutral.grayShades[900]
+                                      : gordonColors.neutral.lightGray,
+                                  }}
+                                >
+                                  <FaSchool style={styles2.FontAwesome} className={classes.icon} />
+                                </IconContext.Provider>
+                              </Grid>
+                            )}
+                          />
+                          <Grid item xs={11}>
+                            <FormControl
+                              variant="filled"
+                              fullWidth
+                              className={this.state.searchValues.includeStudent ? null : 'disabled'}
+                              disabled={!this.state.searchValues.includeStudent}
+                            >
+                              <InputLabel id="class">Class</InputLabel>
+                              <Select
+                                labelId="class"
+                                id="class"
+                                value={this.state.searchValues.classType}
+                                onChange={this.handleClassTypeInputChange}
+                              >
+                                <MenuItem label="All Classes" value="">
+                                  <em>All</em>
+                                </MenuItem>
+                                <MenuItem value={1}>First Year</MenuItem>
+                                <MenuItem value={2}>Sophomore</MenuItem>
+                                <MenuItem value={3}>Junior</MenuItem>
+                                <MenuItem value={4}>Senior</MenuItem>
+                                <MenuItem value={5}>Graduate Student</MenuItem>
+                                <MenuItem value={6}>Undergraduate Conferred</MenuItem>
+                                <MenuItem value={7}>Graduate Conferred</MenuItem>
+                                <MenuItem value={0}>Unassigned</MenuItem>
+                              </Select>
+                            </FormControl>
+                          </Grid>
+                        </Grid>
+                      </Collapse>
+                    </Grid>
+
+                    {/* Advanced Search Filters: Faculty/Staff */}
+                    <Grid item xs={12} sm={4} variant="h4">
+                      <Collapse
+                        in={this.state.advancedSearchExpanded}
+                        timeout="auto"
+                        unmountOnExit
+                        style={styles2.CardContent}
+                      >
+                        <br />
+                        <Typography align="center" gutterBottom>
+                          <InputLabel
+                            style={{
+                              color: this.state.searchValues.includeFacStaff
+                                ? gordonColors.primary.blue
+                                : gordonColors.neutral.lightGray,
+                            }}
                           >
-                            <MenuItem label="All Majors" value="">
-                              <em>All Majors</em>
-                            </MenuItem>
-                            {majorOptions}
-                          </Select>
-                        </FormControl>
-                      </Grid>
-                    </Grid>
-                    <Grid container spacing={2} alignItems="flex-end">
-                      <Media
-                        query="(min-width: 600px)"
-                        render={() => (
-                          <Grid item>
-                            <FaBook style={styles.FontAwesome} className={classes.icon} />
+                            Faculty/Staff
+                          </InputLabel>
+                        </Typography>
+                        <Grid container spacing={2} alignItems="center">
+                          <Media
+                            query="(min-width: 600px)"
+                            render={() => (
+                              <Grid item xs="1" style={{ marginBottom: '-4px' }}>
+                                <IconContext.Provider
+                                  value={{
+                                    color: this.state.searchValues.includeFacStaff
+                                      ? gordonColors.neutral.grayShades[900]
+                                      : gordonColors.neutral.lightGray,
+                                  }}
+                                >
+                                  <FaBriefcase
+                                    style={styles2.FontAwesome}
+                                    className={classes.icon}
+                                  />
+                                </IconContext.Provider>
+                              </Grid>
+                            )}
+                          />
+                          <Grid item xs={11}>
+                            <FormControl
+                              variant="filled"
+                              fullWidth
+                              className={
+                                this.state.searchValues.includeFacStaff ? null : styles.disabled
+                              }
+                              disabled={!this.state.searchValues.includeFacStaff}
+                            >
+                              <InputLabel id="department-type">Dept.</InputLabel>
+                              <Select
+                                labelId="department-type"
+                                id="department-type"
+                                value={this.state.searchValues.department}
+                                onChange={this.handleDepartmentInputChange}
+                              >
+                                <MenuItem label="All Departments" value="">
+                                  <em>All</em>
+                                </MenuItem>
+                                {departmentOptions}
+                              </Select>
+                            </FormControl>
                           </Grid>
-                        )}
-                      />
-                      <Grid item xs={11}>
-                        <FormControl fullWidth>
-                          <InputLabel>Minor</InputLabel>
-                          <Select
-                            value={this.state.minorSearchValue}
-                            onChange={this.handleMinorInputChange}
-                            input={<Input id="minor" />}
-                          >
-                            <MenuItem label="All Minors" value="">
-                              <em>All Minors</em>
-                            </MenuItem>
-                            {minorOptions}
-                          </Select>
-                        </FormControl>
-                      </Grid>
-                    </Grid>
-                    <Grid container spacing={2} alignItems="flex-end">
-                      <Media
-                        query="(min-width: 600px)"
-                        render={() => (
-                          <Grid item>
-                            <FaSchool style={styles.FontAwesome} className={classes.icon} />
+                        </Grid>
+                        <Grid container spacing={2} alignItems="center">
+                          <Media
+                            query="(min-width: 600px)"
+                            render={() => (
+                              <Grid item xs="1" style={{ marginBottom: '-4px' }}>
+                                <IconContext.Provider
+                                  value={{
+                                    color: this.state.searchValues.includeFacStaff
+                                      ? gordonColors.neutral.grayShades[900]
+                                      : gordonColors.neutral.lightGray,
+                                  }}
+                                >
+                                  <FaBuilding
+                                    style={styles2.FontAwesome}
+                                    className={classes.icon}
+                                  />
+                                </IconContext.Provider>
+                              </Grid>
+                            )}
+                          />
+                          <Grid item xs={11}>
+                            <FormControl
+                              variant="filled"
+                              fullWidth
+                              className={
+                                this.state.searchValues.includeFacStaff ? null : styles.disabled
+                              }
+                              disabled={!this.state.searchValues.includeFacStaff}
+                            >
+                              <InputLabel id="building-type">Building</InputLabel>
+                              <Select
+                                labelId="building-type"
+                                id="building-type"
+                                value={this.state.searchValues.building}
+                                onChange={this.handleBuildingInputChange}
+                              >
+                                <MenuItem label="All Buildings" value="">
+                                  <em>All</em>
+                                </MenuItem>
+                                {buildingOptions}
+                              </Select>
+                            </FormControl>
                           </Grid>
-                        )}
-                      />
-                      <Grid item xs={11}>
-                        <FormControl fullWidth>
-                          <InputLabel>Class</InputLabel>
-                          <Select
-                            value={this.state.classTypeSearchValue}
-                            onChange={this.handleClassTypeInputChange}
-                            input={<Input id="class" />}
-                          >
-                            <MenuItem label="All Classes" value="">
-                              <em>All</em>
-                            </MenuItem>
-                            <MenuItem value={1}>Freshman</MenuItem>
-                            <MenuItem value={2}>Sophomore</MenuItem>
-                            <MenuItem value={3}>Junior</MenuItem>
-                            <MenuItem value={4}>Senior</MenuItem>
-                            <MenuItem value={5}>Graduate Student</MenuItem>
-                            <MenuItem value={6}>Undergraduate Conferred</MenuItem>
-                            <MenuItem value={7}>Graduate Conferred</MenuItem>
-                            <MenuItem value={0}>Unassigned</MenuItem>
-                          </Select>
-                        </FormControl>
-                      </Grid>
+                        </Grid>
+                      </Collapse>
                     </Grid>
-                  </Collapse>
-                  <Collapse
-                    in={this.state.homeExpanded}
-                    timeout="auto"
-                    unmountOnExit
-                    style={styles.CardContent}
-                  >
-                    <Grid container spacing={2} alignItems="flex-end">
-                      <Media
-                        query="(min-width: 600px)"
-                        render={() => (
-                          <Grid item>
-                            <HomeIcon style={styles.FontAwesome} className={classes.icon} />
+
+                    {/* Advanced Search Filters: Everyone */}
+                    <Grid item xs={12} sm={4} spacing={3}>
+                      <Collapse
+                        in={this.state.advancedSearchExpanded}
+                        timeout="auto"
+                        unmountOnExit
+                        style={styles2.CardContent}
+                      >
+                        <br />
+                        <Typography align="center" gutterBottom>
+                          <InputLabel style={{ color: gordonColors.primary.blue }}>
+                            {' '}
+                            Everyone
+                          </InputLabel>
+                        </Typography>
+                        <Grid container spacing={2} alignItems="center">
+                          <Media
+                            query="(min-width: 600px)"
+                            render={() => (
+                              <Grid item xs="1" style={{ marginBottom: '-4px' }}>
+                                <HomeIcon style={styles2.FontAwesome} className={classes.icon} />
+                              </Grid>
+                            )}
+                          />
+                          <Grid item xs={11}>
+                            <TextField
+                              id="hometown"
+                              label="Hometown"
+                              type="search"
+                              fullWidth
+                              value={this.state.searchValues.homeCity}
+                              onChange={this.handleHomeCityInputChange}
+                              onKeyDown={this.handleEnterKeyPress}
+                              variant="filled"
+                            />
                           </Grid>
-                        )}
-                      />
-                      <Grid item xs={11}>
-                        <TextField
-                          id="hometown"
-                          label="Hometown"
-                          fullWidth
-                          value={this.state.homeCitySearchValue}
-                          onChange={this.handleHomeCityInputChange}
-                          onKeyDown={this.handleEnterKeyPress}
-                        />
-                      </Grid>
-                    </Grid>
-                    <Grid container spacing={2} alignItems="flex-end">
-                      <Media
-                        query="(min-width: 600px)"
-                        render={() => (
-                          <Grid item>
-                            <CityIcon style={styles.FontAwesome} className={classes.icon} />
+                        </Grid>
+                        <Grid container spacing={2} alignItems="center">
+                          <Media
+                            query="(min-width: 600px)"
+                            render={() => (
+                              <Grid item xs="1" style={{ marginBottom: '-4px' }}>
+                                <CityIcon style={styles2.FontAwesome} className={classes.icon} />
+                              </Grid>
+                            )}
+                          />
+                          <Grid item xs={11}>
+                            <FormControl variant="filled" fullWidth>
+                              <InputLabel id="state">State</InputLabel>
+                              <Select
+                                labelId="state"
+                                id="state"
+                                value={this.state.searchValues.state}
+                                onChange={this.handleStateInputChange}
+                              >
+                                <MenuItem label="All States" value="">
+                                  <em>All</em>
+                                </MenuItem>
+                                {stateOptions}
+                              </Select>
+                            </FormControl>
                           </Grid>
-                        )}
-                      />
-                      <Grid item xs={11}>
-                        <FormControl fullWidth>
-                          <InputLabel>State</InputLabel>
-                          <Select
-                            value={this.state.stateSearchValue}
-                            onChange={this.handleStateInputChange}
-                            input={<Input id="state" />}
-                          >
-                            <MenuItem label="All States" value="">
-                              <em>All</em>
-                            </MenuItem>
-                            {stateOptions}
-                          </Select>
-                        </FormControl>
-                      </Grid>
-                    </Grid>
-                    <Grid container spacing={2} alignItems="flex-end">
-                      <Media
-                        query="(min-width: 600px)"
-                        render={() => (
-                          <Grid item>
-                            <FaGlobeAmericas style={styles.FontAwesome} className={classes.icon} />
+                        </Grid>
+                        <Grid container spacing={2} alignItems="center">
+                          <Media
+                            query="(min-width: 600px)"
+                            render={() => (
+                              <Grid item xs="1" style={{ marginBottom: '-4px' }}>
+                                <FaGlobeAmericas
+                                  style={styles2.FontAwesome}
+                                  className={classes.icon}
+                                />
+                              </Grid>
+                            )}
+                          />
+                          <Grid item xs={11}>
+                            <FormControl variant="filled" fullWidth>
+                              <InputLabel id="country">Country</InputLabel>
+                              <Select
+                                labelId="country"
+                                id="country"
+                                value={this.state.searchValues.country}
+                                onChange={this.handleCountryInputChange}
+                              >
+                                <MenuItem label="All Countries" value="">
+                                  <em>All</em>
+                                </MenuItem>
+                                {countryOptions}
+                              </Select>
+                            </FormControl>
                           </Grid>
-                        )}
-                      />
-                      <Grid item xs={11}>
-                        <FormControl fullWidth>
-                          <InputLabel>Country</InputLabel>
-                          <Select
-                            value={this.state.countrySearchValue}
-                            onChange={this.handleCountryInputChange}
-                            input={<Input id="country" />}
-                          >
-                            <MenuItem label="All Countries" value="">
-                              <em>All</em>
-                            </MenuItem>
-                            {countryOptions}
-                          </Select>
-                        </FormControl>
-                      </Grid>
+                        </Grid>
+                      </Collapse>
                     </Grid>
-                  </Collapse>
-                  <Collapse
-                    in={this.state.offDepExpanded}
-                    timeout="auto"
-                    unmountOnExit
-                    style={styles.CardContent}
-                  >
-                    <Grid container spacing={2} alignItems="flex-end">
-                      <Media
-                        query="(min-width: 600px)"
-                        render={() => (
-                          <Grid item>
-                            <FaBriefcase style={styles.FontAwesome} className={classes.icon} />
-                          </Grid>
-                        )}
-                      />
-                      <Grid item xs={11}>
-                        <FormControl fullWidth>
-                          <InputLabel>Department</InputLabel>
-                          <Select
-                            value={this.state.departmentSearchValue}
-                            onChange={this.handleDepartmentInputChange}
-                            input={<Input id="department-type" />}
-                          >
-                            <MenuItem label="All Departments" value="">
-                              <em>All</em>
-                            </MenuItem>
-                            {departmentOptions}
-                          </Select>
-                        </FormControl>
-                      </Grid>
-                    </Grid>
-                    <Grid container spacing={2} alignItems="flex-end">
-                      <Media
-                        query="(min-width: 600px)"
-                        render={() => (
-                          <Grid item>
-                            <FaBuilding style={styles.FontAwesome} className={classes.icon} />
-                          </Grid>
-                        )}
-                      />
-                      <Grid item xs={11}>
-                        <FormControl fullWidth>
-                          <InputLabel>Building</InputLabel>
-                          <Select
-                            value={this.state.buildingSearchValue}
-                            onChange={this.handleBuildingInputChange}
-                            input={<Input id="building-type" />}
-                          >
-                            <MenuItem label="All Buildings" value="">
-                              <em>All</em>
-                            </MenuItem>
-                            {buildingOptions}
-                          </Select>
-                        </FormControl>
-                      </Grid>
-                    </Grid>
-                  </Collapse>
+                  </Grid>
                 </CardContent>
 
                 <CardActions>
-                  <Grid container xs={12} justify="center" spacing={2}>
-                    {/* Clear All Button */}
+                  <Grid container justifyContent="center" spacing={2}>
+                    {/* Reset Button */}
                     <Grid item xs={8} sm={'auto'}>
                       <Button
                         style={{ backgroundColor: gordonColors.neutral.lightGray }}
                         fullWidth
                         variant="contained"
                         onClick={() => {
-                          this.setState({
-                            includeAlumni: false,
-                            firstNameSearchValue: '',
-                            lastNameSearchValue: '',
-                            majorSearchValue: '',
-                            minorSearchValue: '',
-                            hallSearchValue: '',
-                            classTypeSearchValue: '',
-                            homeCitySearchValue: '',
-                            stateSearchValue: '',
-                            countrySearchValue: '',
-                            departmentSearchValue: '',
-                            buildingSearchValue: '',
-                            academicsExpanded: false,
-                            homeExpanded: false,
-                            offDepExpanded: false,
-                            header: '',
-                            peopleSearchResults: null,
-                          });
+                          this.setState(
+                            {
+                              searchValues: {
+                                includeStudent: this.state.personType.includes('alum')
+                                  ? false
+                                  : true,
+                                includeFacStaff: true,
+                                includeAlumni: this.state.personType.includes('alum')
+                                  ? true
+                                  : false,
+                                firstName: '',
+                                lastName: '',
+                                major: '',
+                                minor: '',
+                                hall: '',
+                                classType: '',
+                                homeCity: '',
+                                state: '',
+                                country: '',
+                                department: '',
+                                building: '',
+                              },
+                              academicsExpanded: false,
+                              header: '',
+                              resultData: null,
+                              displayLargeImage: false,
+                            },
+                            () => this.updateURL(),
+                          );
                         }}
                       >
-                        Clear All
+                        RESET
                       </Button>
                     </Grid>
                     {/* Search Button */}
@@ -1205,23 +1263,11 @@ class PeopleSearch extends Component {
                       <Button
                         color="primary"
                         onClick={() => {
-                          this.search(
-                            this.state.includeAlumni,
-                            this.state.firstNameSearchValue,
-                            this.state.lastNameSearchValue,
-                            this.state.majorSearchValue,
-                            this.state.minorSearchValue,
-                            this.state.hallSearchValue,
-                            this.state.classTypeSearchValue,
-                            this.state.homeCitySearchValue,
-                            this.state.stateSearchValue,
-                            this.state.countrySearchValue,
-                            this.state.departmentSearchValue,
-                            this.state.buildingSearchValue,
-                          );
+                          this.search();
                         }}
                         fullWidth
                         variant="contained"
+                        disabled={!this.canSearch()}
                       >
                         SEARCH
                       </Button>
@@ -1231,90 +1277,31 @@ class PeopleSearch extends Component {
                 <br />
               </Card>
               <br />
-              <Card>
+              <Card ref={(el) => (this.componentRef = el)}>
+                {printPeopleSearchHeader}
                 {this.state.header}
-                {this.state.peopleSearchResults}
+                {this.state.resultData}
               </Card>
+              {this.state.personType && !this.state.personType.includes('stu') && (
+                <ReactToPrint
+                  trigger={() => {
+                    return printPeopleSearchButton;
+                  }}
+                  content={() => this.componentRef}
+                />
+              )}
             </Grid>
           </Grid>
         );
       } else {
-        PeopleSearch = (
-          <Grid container justify="center" spacing="16">
-            <Grid item xs={12} md={8}>
-              <Card>
-                <CardContent
-                  style={{
-                    margin: 'auto',
-                    textAlign: 'center',
-                  }}
-                >
-                  <Grid
-                    item
-                    xs={2}
-                    alignItems="center"
-                    style={{
-                      display: 'block',
-                      marginLeft: 'auto',
-                      marginRight: 'auto',
-                    }}
-                  >
-                    <NoConnectionImage />
-                  </Grid>
-                  <br />
-                  <h1>Please Re-establish Connection</h1>
-                  <h4>People Search has been deactivated due to loss of network.</h4>
-                  <br />
-                  <br />
-                  <Button
-                    color="primary"
-                    backgroundColor="white"
-                    variant="outlined"
-                    onClick={() => {
-                      window.location.pathname = '';
-                    }}
-                  >
-                    Back To Home
-                  </Button>
-                </CardContent>
-              </Card>
-            </Grid>
-          </Grid>
-        );
+        return <GordonOffline feature="People Search" />;
       }
 
       return PeopleSearch;
     } else {
-      return (
-        <Grid container justify="center">
-          <Grid item xs={12} md={8}>
-            <Card>
-              <CardContent
-                style={{
-                  margin: 'auto',
-                  textAlign: 'center',
-                }}
-              >
-                <h1>You are not logged in.</h1>
-                <br />
-                <h4>You must be logged in to view use People Search.</h4>
-                <br />
-                <Button
-                  color="primary"
-                  variant="contained"
-                  onClick={() => {
-                    window.location.pathname = '';
-                  }}
-                >
-                  Login
-                </Button>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-      );
+      return <GordonUnauthorized feature={'People Search'} />;
     }
   }
 }
 
-export default withStyles(styles)(PeopleSearch);
+export default withStyles(styles2)(PeopleSearch);

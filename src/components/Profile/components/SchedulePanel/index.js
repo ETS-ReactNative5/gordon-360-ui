@@ -1,4 +1,4 @@
-import React, { Component, Fragment } from 'react';
+import { Component, Fragment } from 'react';
 import GordonScheduleCalendar from './components/ScheduleCalendar';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import { withStyles } from '@material-ui/core/styles';
@@ -19,9 +19,9 @@ import {
   Grid,
   Button,
   Switch,
-  ExpansionPanel,
-  ExpansionPanelSummary,
-  ExpansionPanelDetails,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
   Typography,
 } from '@material-ui/core';
 
@@ -29,7 +29,7 @@ import {
 const STARTHOUR = '08:00';
 const ENDHOUR = '17:00';
 
-const styles = {
+const styles2 = {
   colorSwitchBase: {
     color: gordonColors.neutral.lightGray,
     '&$colorChecked': {
@@ -358,29 +358,37 @@ class GordonSchedulePanel extends Component {
       schedulePanel = <GordonLoader />;
     } else {
       schedulePanel = (
-        <ExpansionPanel TransitionProps={{ unmountOnExit: true }} onChange={this.handleIsExpanded}>
-          <ExpansionPanelSummary
+        <Accordion TransitionProps={{ unmountOnExit: true }} onChange={this.handleIsExpanded}>
+          <AccordionSummary
             expandIcon={<ExpandMoreIcon />}
             aria-controls="panel1a-content"
             id="panel1a-header"
           >
             <Typography>{panelTitle} the Schedule</Typography>
-          </ExpansionPanelSummary>
-          <ExpansionPanelDetails>
-            <Grid container direction="row" xs={12} lg={12} justify="center">
+          </AccordionSummary>
+          <AccordionDetails>
+            <Grid container direction="row" justifyContent="center">
               {this.props.network === 'online' && (
-                <Grid container direction="row" xs={12} lg={10}>
-                  <Grid container xs={12} lg={8} alignItems="center" justify="flex-start">
+                <Grid container direction="row" item xs={12} lg={10}>
+                  <Grid
+                    container
+                    item
+                    xs={12}
+                    lg={8}
+                    alignItems="center"
+                    justifyContent="flex-start"
+                  >
                     <Markup content={replaced} />
                   </Grid>
 
                   <Grid
                     container
                     direction="column"
+                    item
                     xs={12}
                     lg={4}
                     alignItems="flex-end"
-                    justify="flex-end"
+                    justifyContent="flex-end"
                   >
                     {privacyButton}
                   </Grid>
@@ -396,10 +404,11 @@ class GordonSchedulePanel extends Component {
                   <Grid
                     container
                     direction="column"
+                    item
                     xs={12}
                     lg={8}
                     alignItems="flex-end"
-                    justify="flex-end"
+                    justifyContent="flex-end"
                   >
                     {lastUpdate}
                   </Grid>
@@ -422,13 +431,11 @@ class GordonSchedulePanel extends Component {
               </Grid>
             </Grid>
 
-            <Fragment>
-              {editDialog}
-              {myScheduleDialog}
-              {removeScheduleDialog}
-            </Fragment>
-          </ExpansionPanelDetails>
-        </ExpansionPanel>
+            {editDialog}
+            {myScheduleDialog}
+            {removeScheduleDialog}
+          </AccordionDetails>
+        </Accordion>
       );
     }
 
@@ -436,4 +443,4 @@ class GordonSchedulePanel extends Component {
   }
 }
 
-export default withStyles(styles)(GordonSchedulePanel);
+export default withStyles(styles2)(GordonSchedulePanel);

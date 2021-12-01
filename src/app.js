@@ -1,103 +1,86 @@
-import { createBrowserHistory } from 'history';
-import MuiThemeProvider from '@material-ui/core/styles/MuiThemeProvider';
-import React, { Component } from 'react';
-import { Router, Route, Switch } from 'react-router-dom';
-import { MuiPickersUtilsProvider } from '@material-ui/pickers';
 import MomentUtils from '@date-io/moment';
-import './app.css';
-import analytics from './services/analytics';
-import { isAuthenticated } from './services/auth';
-import NetworkContextProvider from './contexts/NetworkContext';
+import { ThemeProvider } from '@material-ui/core/styles';
+import { MuiPickersUtilsProvider } from '@material-ui/pickers';
+import BirthdayMessage from 'components/BirthdayMessage';
+import UserContextProvider, { AuthContext } from 'contexts/UserContext';
+import { createBrowserHistory } from 'history';
+import { useEffect, useRef, useState } from 'react';
+import { Route, Router, Switch } from 'react-router-dom';
+import './app.global.css';
+import styles from './app.module.css';
+import ErrorBoundary from './components/ErrorBoundary';
 import GordonHeader from './components/Header';
 import GordonNav from './components/Nav';
 import OfflineBanner from './components/OfflineBanner';
-import theme from './theme';
+import NetworkContextProvider from './contexts/NetworkContext';
 import routes from './routes';
+import analytics from './services/analytics';
+import theme from './theme';
 
-export default class App extends Component {
-  constructor(props) {
-    super(props);
+const ContextProviders = ({ children }) => {
+  return (
+    <ThemeProvider theme={theme}>
+      <MuiPickersUtilsProvider utils={MomentUtils}>
+        <NetworkContextProvider>
+          <UserContextProvider>{children}</UserContextProvider>
+        </NetworkContextProvider>
+      </MuiPickersUtilsProvider>
+    </ThemeProvider>
+  );
+};
 
+const App = () => {
+  const [drawerOpen, setDrawerOpen] = useState();
+
+  const historyRef = useRef(createBrowserHistory());
+
+  const onDrawerToggle = () => {
+    setDrawerOpen((o) => !o);
+  };
+
+  useEffect(() => {
     // Only use analytics in production
     if (process.env.NODE_ENV === 'production') {
       analytics.initialize();
     }
 
-    this.history = createBrowserHistory();
-    this.history.listen(() => analytics.onPageView());
+    historyRef.current.listen(() => analytics.onPageView());
+  }, []);
 
-    this.onDrawerToggle = this.onDrawerToggle.bind(this);
-    this.onAuthChange = this.onAuthChange.bind(this);
+  return (
+    <ErrorBoundary>
+      <ContextProviders>
+        <Router history={historyRef.current}>
+          <GordonHeader onDrawerToggle={onDrawerToggle} />
+          <GordonNav onDrawerToggle={onDrawerToggle} drawerOpen={drawerOpen} />
+          <main className={styles.app_main}>
+            <AuthContext.Consumer>
+              {(authenticated) => (
+                <>
+                  <BirthdayMessage />
+                  <Switch>
+                    {routes.map((route) => (
+                      <Route
+                        key={route.path}
+                        path={route.path}
+                        exact={route.exact}
+                        render={(props) => (
+                          <div className={styles.app_main_container}>
+                            <OfflineBanner currentPath={route.path} authentication={props.auth} />
+                            <route.component authentication={authenticated} {...props} />
+                          </div>
+                        )}
+                      />
+                    ))}
+                  </Switch>
+                </>
+              )}
+            </AuthContext.Consumer>
+          </main>
+        </Router>
+      </ContextProviders>
+    </ErrorBoundary>
+  );
+};
 
-    this.state = {
-      error: null,
-      errorInfo: null,
-      drawerOpen: false,
-      authentication: isAuthenticated(),
-    };
-  }
-  onDrawerToggle() {
-    this.setState({ drawerOpen: !this.state.drawerOpen });
-  }
-
-  componentDidCatch(error, errorInfo) {
-    if (process.env.NODE_ENV === 'production') {
-      analytics.onError(`${error.toString()} ${errorInfo.componentStack}`);
-    }
-
-    this.setState({ error, errorInfo });
-  }
-
-  onAuthChange() {
-    let authentication = isAuthenticated();
-    this.setState({ authentication });
-  }
-
-  render() {
-    return (
-      <MuiThemeProvider theme={theme}>
-        <MuiPickersUtilsProvider utils={MomentUtils}>
-          <NetworkContextProvider>
-            <Router history={this.history}>
-              <GordonHeader
-                onDrawerToggle={this.onDrawerToggle}
-                onSignOut={this.onAuthChange}
-                authentication={this.state.authentication}
-              />
-              <GordonNav
-                onDrawerToggle={this.onDrawerToggle}
-                drawerOpen={this.state.drawerOpen}
-                onSignOut={this.onAuthChange}
-                authentication={this.state.authentication}
-              />
-              <main className="app-main">
-                <Switch>
-                  {routes.map((route) => (
-                    <Route
-                      key={route.path}
-                      path={route.path}
-                      exact={route.exact}
-                      render={(props) => (
-                        <div className="app-main-container">
-                          <OfflineBanner
-                            currentPath={route.path}
-                            authentication={this.state.authentication}
-                          />
-                          <route.component
-                            onLogIn={this.onAuthChange}
-                            authentication={this.state.authentication}
-                            {...props}
-                          />
-                        </div>
-                      )}
-                    />
-                  ))}
-                </Switch>
-              </main>
-            </Router>
-          </NetworkContextProvider>
-        </MuiPickersUtilsProvider>
-      </MuiThemeProvider>
-    );
-  }
-}
+export default App;

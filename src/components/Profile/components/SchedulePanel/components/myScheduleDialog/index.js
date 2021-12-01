@@ -1,4 +1,4 @@
-import React, { Fragment } from 'react';
+import { Component, Fragment } from 'react';
 
 import { gordonColors } from 'theme';
 import myschedule from 'services/myschedule';
@@ -22,7 +22,7 @@ import { KeyboardTimePicker } from '@material-ui/pickers';
 const STARTHOUR = '08:00';
 const ENDHOUR = '17:00';
 
-export default class MyScheduleDialog extends React.Component {
+export default class MyScheduleDialog extends Component {
   constructor(props) {
     super(props);
 
@@ -353,17 +353,16 @@ export default class MyScheduleDialog extends React.Component {
         onClose={this.props.handleMyScheduleClose}
         fullWidth="true"
         maxWidth="md"
-        className="time-tile"
       >
         <DialogTitle>{dialogTitle} schedule item</DialogTitle>
 
         <DialogContent>
-          <form className="info" onSubmit={this.handleSubmit}>
+          <form onSubmit={this.handleSubmit}>
             <FormControl error={!this.state.checkedValid}>
               <FormHelperText>
                 {this.state.checkedValid ? '' : this.state.formErrors.checkedInput}
               </FormHelperText>
-              <FormGroup row="true" className="dayWeek">
+              <FormGroup row="true">
                 <FormControlLabel
                   control={
                     <Checkbox
@@ -479,7 +478,6 @@ export default class MyScheduleDialog extends React.Component {
                   />
                 }
                 label={<Typography style={{ fontSize: '0.9rem' }}>All Day</Typography>}
-                className="alldaycheckbox"
                 style={{ verticalAlign: 'bottom', marginLeft: '1.5%' }}
               />
             </div>

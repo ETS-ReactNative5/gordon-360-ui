@@ -8,22 +8,27 @@ import http from './http';
 
 /**
  * Search for (AKA GoStalk) a person/people based on the following queried parameters
- * @param {Boolean} includeAlumni For non-Students to decide if they want alumni in their search results or not
- * @param {String} firstName First name queried
- * @param {String} lastName Last name queried
- * @param {String} major Major (matches up against 3 majors listed for people)
- * @param {String} minor Minor (matches up against 3 minors listed for people)
- * @param {String} hall Dorm hall that a student lives in
- * @param {String} classType 0-7: Unassigned, Freshman, Sophomore, Junior, Senior, Graduate Student,
+ *
+ * @param {boolean} includeStudent To decide if they want student in their search results or not
+ * @param {boolean} includeFacStaff To decide if they want faculty and staff in their search results or not
+ * @param {boolean} includeAlumni For non-Students to decide if they want alumni in their search results or not
+ * @param {string} firstName First name queried
+ * @param {string} lastName Last name queried
+ * @param {string} major Major (matches up against 3 majors listed for people)
+ * @param {string} minor Minor (matches up against 3 minors listed for people)
+ * @param {string} hall Dorm hall that a student lives in
+ * @param {string} classType 0-7: Unassigned, First Year, Sophomore, Junior, Senior, Graduate Student,
  * Undegraduate Conferred, Graduate Conferred
- * @param {String} homeCity Hometown/Home city queried
- * @param {String} state A US state or a Canadian Province
- * @param {String} country Country queried
- * @param {String} department Department where faculty/staff work
- * @param {String} building Building where faculty/staff work
- * @return {Promise.<SearchResult[]>} List of search results that match these queried parameters
+ * @param {string} homeCity Hometown/Home city queried
+ * @param {string} state A US state or a Canadian Province
+ * @param {string} country Country queried
+ * @param {string} department Department where faculty/staff work
+ * @param {string} building Building where faculty/staff work
+ * @returns {Promise.<SearchResult[]>} List of search results that match these queried parameters
  */
 const search = (
+  includeStudent,
+  includeFacStaff,
   includeAlumni,
   firstName,
   lastName,
@@ -42,7 +47,7 @@ const search = (
 
   firstName = firstName
     .trim()
-    .replace(/[^a-zA-Z\s,.'-]/g, '')
+    .replace(/[^a-zA-Z0-9\s,.'-]/g, '')
     .toLowerCase();
   if (firstName === '' || firstName === null) {
     // eslint-disable-next-line
@@ -50,13 +55,11 @@ const search = (
   }
   lastName = lastName
     .trim()
-    .replace(/[^a-zA-Z\s,.'-]/g, '')
+    .replace(/[^a-zA-Z0-9\s,.'-]/g, '')
     .toLowerCase();
   if (lastName === '' || lastName === null) {
     // eslint-disable-next-line
     lastName = 'C' + '\u266F';
-  } else {
-    lastName = lastName.toLowerCase();
   }
   if (major === '' || major === null) {
     // eslint-disable-next-line
@@ -91,7 +94,7 @@ const search = (
   }
   homeCity = homeCity
     .trim()
-    .replace(/[^a-zA-Z\s,.'-]/g, '')
+    .replace(/[^a-zA-Z0-9\s,.'-]/g, '')
     .toLowerCase();
   if (homeCity === '' || homeCity === null) {
     // eslint-disable-next-line
@@ -121,14 +124,16 @@ const search = (
     // workaround to avoid breaking the backend
     building = building.replace('.', '_');
   }
+
   return http.get(
-    `accounts/advanced-people-search/${includeAlumni}/${firstName}/${lastName}/${major}/${minor}/${hall}/${classType}/${homeCity}/${state}/${country}/${department}/${building}`,
+    `accounts/advanced-people-search/${includeStudent}/${includeFacStaff}/${includeAlumni}/${firstName}/${lastName}/${major}/${minor}/${hall}/${classType}/${homeCity}/${state}/${country}/${department}/${building}`,
   );
 };
 
 /**
  * Get all majors
- * @return {Promise.<String[]>} List of majors
+ *
+ * @returns {Promise.<string[]>} List of majors
  */
 const getMajors = () => {
   return http.get(`advanced-search/majors`);
@@ -136,7 +141,8 @@ const getMajors = () => {
 
 /**
  * Get all minors
- * @return {Promise.<String[]>} List of minors
+ *
+ * @returns {Promise.<string[]>} List of minors
  */
 const getMinors = () => {
   return http.get(`advanced-search/minors`);
@@ -144,7 +150,8 @@ const getMinors = () => {
 
 /**
  * Get all halls
- * @return {Promise.<String[]>} List of halls
+ *
+ * @returns {Promise.<string[]>} List of halls
  */
 const getHalls = () => {
   return http.get(`advanced-search/halls`);
@@ -152,7 +159,8 @@ const getHalls = () => {
 
 /**
  * Get all states
- * @return {Promise.<String[]>} List of states
+ *
+ * @returns {Promise.<string[]>} List of states
  */
 const getStates = () => {
   return http.get(`advanced-search/states`);
@@ -160,7 +168,8 @@ const getStates = () => {
 
 /**
  * Get all countries
- * @return {Promise.<String[]>} List of countries
+ *
+ * @returns {Promise.<string[]>} List of countries
  */
 const getCountries = () => {
   return http.get(`advanced-search/countries`);
@@ -168,7 +177,8 @@ const getCountries = () => {
 
 /**
  * Get all departments
- * @return {Promise.<String[]>} List of departments
+ *
+ * @returns {Promise.<string[]>} List of departments
  */
 const getDepartments = () => {
   return http.get(`advanced-search/departments`);
@@ -176,13 +186,14 @@ const getDepartments = () => {
 
 /**
  * Get all buildings
- * @return {Promise.<String[]>} List of buildings
+ *
+ * @returns {Promise.<string[]>} List of buildings
  */
 const getBuildings = () => {
   return http.get(`advanced-search/buildings`);
 };
 
-export default {
+const advancedSearchService = {
   search,
   getMajors,
   getMinors,
@@ -192,3 +203,5 @@ export default {
   getDepartments,
   getBuildings,
 };
+
+export default advancedSearchService;

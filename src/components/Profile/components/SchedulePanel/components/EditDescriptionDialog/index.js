@@ -1,10 +1,10 @@
-import React from 'react';
+import { Component } from 'react';
 import { gordonColors } from 'theme';
-import './editdescriptiondialog.css';
+import styles from './EditDescriptionDialog.module.css';
 
 import { Dialog, DialogTitle, DialogActions, Button, TextField } from '@material-ui/core';
 
-export default class EditDescriptionDialog extends React.Component {
+export default class EditDescriptionDialog extends Component {
   constructor(props) {
     super(props);
 
@@ -49,8 +49,8 @@ export default class EditDescriptionDialog extends React.Component {
 
     return (
       <Dialog open={this.props.editDescriptionOpen} keepMounted fullWidth="true" maxWidth="xs">
-        <div className="desc-tile">
-          <DialogTitle className="desc-title">Edit schedule description</DialogTitle>
+        <div className={styles.desc_tile}>
+          <DialogTitle className={styles.desc_title}>Edit schedule description</DialogTitle>
 
           <TextField
             id="descInput"
@@ -58,10 +58,10 @@ export default class EditDescriptionDialog extends React.Component {
             defaultValue={this.state.descInput}
             value={this.state.descInput}
             onChange={this.handleChange('descInput')}
-            className="desc-description"
+            className={styles.desc_description}
           />
 
-          <DialogActions className="desc-buttons">
+          <DialogActions className={styles.desc_buttons}>
             <Button
               onClick={this.props.handleEditDescriptionClose}
               variant="contained"

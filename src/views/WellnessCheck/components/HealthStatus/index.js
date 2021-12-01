@@ -1,14 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { Button, Card, CardContent, CardHeader, Grid, Typography } from '@material-ui/core';
-import { Check, Remove, Clear } from '@material-ui/icons';
-import { StatusColors } from 'services/wellness';
+import { Button, Card, CardContent, CardHeader, Grid } from '@material-ui/core';
+import { Check, Clear, Remove } from '@material-ui/icons';
 import SymptomsDialog from 'components/SymptomsDialog';
-import './index.css';
+import { useUser } from 'hooks';
+import { useEffect, useState } from 'react';
+import { StatusColors } from 'services/wellness';
+import styles from './HealthStatus.module.css';
 
-const HealthStatus = ({ currentStatus, setCurrentStatus, username, image }) => {
+const HealthStatus = ({ currentStatus, setCurrentStatus }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [time, setTime] = useState(null);
   const [iconSize, setIconSize] = useState(0);
+  const user = useUser();
 
   useEffect(() => {
     tick();
@@ -58,41 +60,22 @@ const HealthStatus = ({ currentStatus, setCurrentStatus, username, image }) => {
   }
 
   return (
-    <Grid container justify="center" spacing={2}>
+    <Grid container justifyContent="center" spacing={2}>
       <Grid item xs={12} md={8}>
-        <Card className="wellness-check">
+        <Card className={styles.wellness_check}>
+          <CardHeader title={user.profile.fullName} />
           <CardContent>
-            <CardHeader title={username} />
-            <Card>
-              <img
-                className="rounded-corners user-image"
-                src={`data:image/jpg;base64,${image}`}
-                alt={username}
-              />
-            </Card>
-            {/* TODO: Remove following code block after Spring 2021 move in is complete */}
-            {/* START */}
-            {currentStatus === StatusColors.RED && (
-              <Typography variant="h5">
-                Students must fill out{' '}
-                <a
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  href="https://forms.office.com/r/BFdQwaTBR1"
-                  className="rtc-link"
-                >
-                  the Post-Easter Break Return to Campus form
-                </a>{' '}
-                before checking in.
-              </Typography>
-            )}
-            {/* END */}
-            <Grid spacing={2} className="wellness-status">
-              <Card className={currentStatus}>
-                <CardContent className="status-box">
-                  <div className="status-time">{time}</div>
+            <img
+              className={`rounded_corners ${styles.user_image}`}
+              src={`data:image/jpg;base64,${user.images?.pref || user.images.def}`}
+              alt={user.profile.fullName}
+            />
+            <Grid className={styles.wellness_status}>
+              <Card className={styles[currentStatus]}>
+                <CardContent className={styles.status_box}>
+                  <div className={styles.status_time}>{time}</div>
 
-                  <div className="status-animation">{animatedIcon}</div>
+                  <div className={styles.status_animation}>{animatedIcon}</div>
                 </CardContent>
               </Card>
               <br />
@@ -108,7 +91,12 @@ const HealthStatus = ({ currentStatus, setCurrentStatus, username, image }) => {
               />
             </Grid>
           </CardContent>
-          <div className="wellness-header">Questions? Health Center: (978) 867-4300 </div>
+          <div className={styles.wellness_header}>
+            Questions? Email{' '}
+            <a className={styles.contact_link} href="mailto:covid-19@gordon.edu">
+              Covid-19@gordon.edu
+            </a>
+          </div>
         </Card>
       </Grid>
     </Grid>

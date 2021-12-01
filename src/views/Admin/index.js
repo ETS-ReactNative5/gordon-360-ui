@@ -1,154 +1,50 @@
-import React, { Component } from 'react';
-import InvolvementsStatus from './components/InvolvementsStatus';
-import SuperAdmin from './components/SuperAdmins';
+import { Grid } from '@material-ui/core';
+import GordonOffline from 'components/GordonOffline';
+import GordonUnauthorized from 'components/GordonUnauthorized';
+import { useAuth, useNetworkStatus } from 'hooks';
+import { useEffect, useState } from 'react';
 import user from 'services/user';
-import { Button, Grid, Card, CardContent } from '@material-ui/core';
-import { ReactComponent as NoConnectionImage } from 'NoConnection.svg';
+import AdminList from './components/AdminList';
+import InvolvementStatusList from './components/InvolvementsStatus';
 
-export default class Admin extends Component {
-  constructor(props) {
-    super(props);
+const Admin = () => {
+  const [isAdmin, setIsAdmin] = useState(false);
+  const isOnline = useNetworkStatus();
+  const authenticated = useAuth();
 
-    this.state = {
-      isSuperAdmin: false,
-      currentSession: '',
-      network: 'online',
-    };
-  }
-
-  async componentDidMount() {
-    if (this.props.authentication) {
-      const college_role = await user.getLocalInfo().college_role;
-      this.setState({ isSuperAdmin: college_role === 'god' ? true : false });
+  useEffect(() => {
+    if (authenticated) {
+      setIsAdmin(user.getLocalInfo().college_role === 'god');
     }
-  }
+  }, [authenticated]);
 
-  render() {
-    /* Used to re-render the page when the network connection changes.
-     *  this.state.network is compared to the message received to prevent
-     *  multiple re-renders that creates extreme performance lost.
-     *  The origin of the message is checked to prevent cross-site scripting attacks
-     */
-    window.addEventListener('message', (event) => {
-      if (
-        event.data === 'online' &&
-        this.state.network === 'offline' &&
-        event.origin === window.location.origin
-      ) {
-        this.setState({ network: 'online' });
-      } else if (
-        event.data === 'offline' &&
-        this.state.network === 'online' &&
-        event.origin === window.location.origin
-      ) {
-        this.setState({ network: 'offline' });
-      }
-    });
-
-    /* Gets status of current network connection for online/offline rendering
-     *  Defaults to online in case of PWA not being possible
-     */
-    const networkStatus = JSON.parse(localStorage.getItem('network-status')) || 'online';
-
-    // Creates the My Profile button link depending on the status of the network found in local storage
-    let Admin;
-
-    if (this.props.authentication) {
-      if (networkStatus === 'online') {
-        if (this.state.isSuperAdmin) {
-          Admin = (
-            <Grid container justify="center" spacing={2}>
-              <Grid item xs={12} lg={8}>
-                <InvolvementsStatus status={'Open'} />
-              </Grid>
-
-              <Grid item xs={12} lg={8}>
-                <InvolvementsStatus status={'Closed'} />
-              </Grid>
-
-              <Grid item xs={12} lg={8}>
-                <SuperAdmin />
-              </Grid>
+  if (authenticated) {
+    if (isOnline) {
+      if (isAdmin) {
+        return (
+          <Grid container justifyContent="center" spacing={2}>
+            <Grid item xs={12} lg={8}>
+              <InvolvementStatusList status={'Open'} />
             </Grid>
-          );
-        } else {
-          Admin = <div />;
-        }
-      } else {
-        Admin = (
-          <Grid container justify="center" spacing="16">
-            <Grid item xs={12} md={8}>
-              <Card>
-                <CardContent
-                  style={{
-                    margin: 'auto',
-                    textAlign: 'center',
-                  }}
-                >
-                  <Grid
-                    item
-                    xs={2}
-                    alignItems="center"
-                    style={{
-                      display: 'block',
-                      marginLeft: 'auto',
-                      marginRight: 'auto',
-                    }}
-                  >
-                    <NoConnectionImage />
-                  </Grid>
-                  <br />
-                  <h1>Please Re-establish Connection</h1>
-                  <h4>Revision of administrators has been deactivated due to loss of network.</h4>
-                  <br />
-                  <br />
-                  <Button
-                    color="primary"
-                    backgroundColor="white"
-                    variant="outlined"
-                    onClick={() => {
-                      window.location.pathname = '';
-                    }}
-                  >
-                    Back To Home
-                  </Button>
-                </CardContent>
-              </Card>
+
+            <Grid item xs={12} lg={8}>
+              <InvolvementStatusList status={'Closed'} />
+            </Grid>
+
+            <Grid item xs={12} lg={8}>
+              <AdminList />
             </Grid>
           </Grid>
         );
+      } else {
+        return null;
       }
     } else {
-      Admin = (
-        <Grid container justify="center">
-          <Grid item xs={12} md={8}>
-            <Card>
-              <CardContent
-                style={{
-                  margin: 'auto',
-                  textAlign: 'center',
-                }}
-              >
-                <h1>You are not logged in.</h1>
-                <br />
-                <h4>You must be logged in to view this page.</h4>
-                <br />
-                <Button
-                  color="primary"
-                  variant="contained"
-                  onClick={() => {
-                    window.location.pathname = '';
-                  }}
-                >
-                  Login
-                </Button>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-      );
+      return <GordonOffline feature="Editing Administrators" />;
     }
-
-    return Admin;
+  } else {
+    return <GordonUnauthorized feature={'the admin page'} />;
   }
-}
+};
+
+export default Admin;

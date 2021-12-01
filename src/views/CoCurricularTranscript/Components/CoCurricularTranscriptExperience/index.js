@@ -1,9 +1,9 @@
 //import Grid from '@material-ui/core/Grid';
 //import Divider from '@material-ui/core/Divider';
-import React, { Component } from 'react';
+import { Component } from 'react';
 //import List from '@material-ui/core/List';
 //import Typography from '@material-ui/core/Typography';
-import './coCurricularTranscriptExperience.css';
+import styles from './CoCurricularTranscriptExperience.module.css';
 
 //This component is a child of the CoCurricularTranscript component.
 //Returns a formatted Experience item to be displayed by the Transcript component
@@ -77,11 +77,11 @@ export default class Experience extends Component {
     Duration = this.formatDuration(Experience);
 
     let content = (
-      <div className="activities">
-        <div className="organization-role">
+      <div className={styles.experience_transcript_activities}>
+        <div className={styles.organization_role}>
           {Experience.Job_Department_Name}, {Experience.Job_Title}
         </div>
-        <div className="date"> {Duration} </div>
+        <div className={styles.date}> {Duration} </div>
       </div>
     );
     return content;

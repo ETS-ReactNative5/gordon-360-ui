@@ -1,54 +1,25 @@
-import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
-import session from 'services/session';
+import { ListItem, ListItemAvatar, Avatar, ListItemText } from '@material-ui/core';
 
-import { Typography, Grid } from '@material-ui/core';
+const ListItemLink = (props) => <ListItem button component={Link} {...props} />;
 
-export default class InvolvementStatusList extends Component {
-  constructor(props) {
-    super(props);
+const InvolvementStatusListItem = ({ involvement, session }) => {
+  return (
+    <ListItemLink
+      className="gc360_link"
+      to={`/activity/${session}/${involvement.ActivityCode}`}
+      divider
+    >
+      <ListItemAvatar>
+        <Avatar
+          variant="rounded"
+          src={involvement.ActivityImagePath}
+          alt={involvement.ActivityDescription}
+        />
+      </ListItemAvatar>
+      <ListItemText primary={involvement.ActivityDescription} />
+    </ListItemLink>
+  );
+};
 
-    this.state = { currentSession: '' };
-  }
-
-  async componentDidMount() {
-    const { SessionCode: sessionCode } = await session.getCurrent();
-    this.setState({ currentSession: sessionCode });
-  }
-
-  render() {
-    const { Activity } = this.props;
-    const imgStyle = {
-      width: '20%',
-    };
-
-    return (
-      <div>
-        <Grid container>
-          <Grid item xs={12} md={10} lg={12}>
-            <Grid container alignItems="center">
-              <Grid item xs={4}>
-                <Link
-                  className="gc360-link"
-                  to={`/activity/${this.state.currentSession}/${this.props.Activity.ActivityCode}`}
-                >
-                  <img src={Activity.ActivityImagePath} alt="" style={imgStyle} />
-                </Link>
-              </Grid>
-              <Grid item xs={8}>
-                <Link
-                  className="gc360-link"
-                  to={`/activity/${this.state.currentSession}/${this.props.Activity.ActivityCode}`}
-                >
-                  <Typography>
-                    <b>{Activity.ActivityDescription}</b>
-                  </Typography>
-                </Link>
-              </Grid>
-            </Grid>
-          </Grid>
-        </Grid>
-      </div>
-    );
-  }
-}
+export default InvolvementStatusListItem;

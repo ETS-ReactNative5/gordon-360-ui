@@ -1,71 +1,52 @@
-import React, { useState, useEffect } from 'react';
+// @TODO CSSMODULES - moved to global styles until a better solution is found
+// import styles from './Home.module.css';
+import { Grid } from '@material-ui/core';
 import GordonLoader from 'components/Loader';
 import WellnessQuestion from 'components/WellnessQuestion';
+import { useAuth } from 'hooks';
+import useNetworkStatus from 'hooks/useNetworkStatus';
+import { useEffect, useState } from 'react';
+import user from 'services/user';
+// @ACADEMIC-CHECKIN disabled line below until getting the correct dates can be done
+// import { Redirect } from 'react-router-dom';
+import wellness from 'services/wellness';
 import Carousel from './components/Carousel';
 import CLWCreditsDaysLeft from './components/CLWCreditsDaysLeft';
 import DaysLeft from './components/DaysLeft';
 import DiningBalance from './components/DiningBalance';
-import NewsCard from './components/NewsCard';
-import user from 'services/user';
-import wellness from 'services/wellness';
-import storage from 'services/storage';
 import GuestWelcome from './components/GuestWelcome';
-import './home.css';
-import { Grid } from '@material-ui/core';
-
-const Home = ({ authentication, onLogIn }) => {
+import NewsCard from './components/NewsCard';
+// @ACADEMIC-CHECKIN disabled line below until getting the correct dates can be done
+// import checkInService from 'services/checkIn';
+const Home = () => {
   const [loading, setLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(authentication);
   const [personType, setPersonType] = useState(null);
-  const [networkStatus, setNetworkStatus] = useState('online');
+  // @ACADEMIC-CHECKIN disabled line below until getting the correct dates can be done
+  // const [checkedIn, setCheckedIn] = useState(null);
+
   const [hasAnswered, setHasAnswered] = useState(null);
+  const isOnline = useNetworkStatus();
+  const authenticated = useAuth();
 
   useEffect(() => {
-    // Retrieve network status from local storage or default to online
-    try {
-      setNetworkStatus(storage.get('network-status'));
-    } catch (error) {
-      setNetworkStatus('online');
-    }
-
-    /* Used to re-render the page when the network connection changes.
-     * The origin of the message is checked to prevent cross-site scripting attacks
-     */
-    window.addEventListener('message', (event) => {
-      setNetworkStatus((prevStatus) => {
-        if (
-          event.origin === window.location.origin &&
-          (event.data === 'online' || event.data === 'offline')
-        ) {
-          return event.data;
-        }
-        return prevStatus;
-      });
-    });
-
-    return () => window.removeEventListener('message', () => {});
-  }, []);
-
-  useEffect(() => {
-    if (authentication) {
+    if (authenticated) {
       loadPage();
-      setIsAuthenticated(true);
     } else {
-      // Clear out component's person-specific state when authentication becomes false
+      // Clear out component's person-specific state when authenticated becomes false
       // (i.e. user logs out) so that it isn't preserved falsely for the next user
       setHasAnswered(null);
       setPersonType(null);
-      setIsAuthenticated(false);
       setLoading(false);
     }
-  }, [authentication]);
-
+  }, [authenticated]);
   const loadPage = async () => {
     setLoading(true);
     const [{ PersonType }, { IsValid }] = await Promise.all([
       user.getProfileInfo(),
       wellness.getStatus(),
     ]);
+    // @ACADEMIC-CHECKIN disabled line below until getting the correct dates can be done
+    // setCheckedIn(await checkInService.getStatus());
     setPersonType(PersonType);
     setHasAnswered(IsValid);
     setLoading(false);
@@ -73,15 +54,19 @@ const Home = ({ authentication, onLogIn }) => {
 
   if (loading) {
     return <GordonLoader />;
-  } else if (!isAuthenticated) {
-    return <GuestWelcome onLogIn={onLogIn} />;
-  } else if (networkStatus === 'online' && !hasAnswered) {
+  } else if (!authenticated) {
+    return <GuestWelcome />;
+  } else if (isOnline && !hasAnswered) {
     return <WellnessQuestion setStatus={() => setHasAnswered(true)} />;
-  } else {
+  }
+  // @ACADEMIC-CHECKIN disabled line below until getting the correct dates can be done
+  // else if (!checkedIn && personType.includes('stu')) {
+  //   return (<Redirect to='/AcademicCheckIn' />);
+  else {
     let doughnut = personType.includes('stu') ? <CLWCreditsDaysLeft /> : <DaysLeft />;
 
     return (
-      <Grid container justify="center" spacing={2}>
+      <Grid container justifyContent="center" spacing={2}>
         <Grid item xs={12} md={10}>
           <Carousel />
         </Grid>

@@ -1,62 +1,36 @@
 import { Avatar, Button, Typography } from '@material-ui/core';
-import React, { useEffect, useState } from 'react';
+import { useAuth, useUser } from 'hooks';
+import { forwardRef, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import './nav-avatar.css';
-import user from 'services/user';
+import userService from 'services/user';
+import styles from './NavAvatar.module.css';
 
-/**
- * Gets the initials of the current user
- * @param {String} username the username to extract initials from
- * @returns {String} The initials of the user if available
- */
-function getInitials(username) {
-  try {
-    return (
-      username
-        ?.split('.') // Split name into separate words
-        ?.map((name) => name?.[0]) // Get first letter of each part of name
-        ?.join('') // Join initials back into a string
-        ?.toUpperCase() ?? null
-    );
-  } catch {
-    return null;
-  }
-}
-
-const GordonNavAvatar = ({ authentication, onLinkClick }) => {
+const GordonNavAvatar = ({ onLinkClick }) => {
   const [email, setEmail] = useState();
   const [image, setImage] = useState();
   const [name, setName] = useState();
-  const [username, setUsername] = useState();
+  const user = useUser();
+  const authenticated = useAuth();
 
   useEffect(() => {
     async function loadAvatar() {
-      if (authentication) {
-        const { name, user_name } = user.getLocalInfo();
-        setName(name);
-        setUsername(user_name);
-
-        const [{ Email: email }, { def: defaultImage, pref: preferredImage }] = await Promise.all([
-          await user.getProfileInfo(),
-          await user.getImage(),
-        ]);
-        const image = preferredImage || defaultImage;
-        setEmail(email);
-        setImage(image);
+      if (authenticated) {
+        setName(user.profile.fullName);
+        setEmail(user.profile.Email);
+        setImage(user.images?.pref || user.images?.def);
       } else {
         setName('Guest');
-        setUsername('Guest');
       }
     }
 
     loadAvatar();
 
-    if (authentication) {
+    if (authenticated) {
       // Used to re-render the page when the user's profile picture changes
       // The origin of the message is checked to prevent cross-site scripting attacks
       window.addEventListener('message', async (event) => {
         if (event.data === 'update-profile-picture' && event.origin === window.location.origin) {
-          const { def: defaultImage, pref: preferredImage } = await user.getImage();
+          const { def: defaultImage, pref: preferredImage } = await userService.getImage();
           const image = preferredImage || defaultImage;
           setImage(image);
         }
@@ -64,53 +38,48 @@ const GordonNavAvatar = ({ authentication, onLinkClick }) => {
 
       return window.removeEventListener('message', () => {});
     }
-  }, [authentication]);
+  }, [user, authenticated]);
 
-  const avatar = authentication ? (
+  const avatar = authenticated ? (
     image ? (
-      <Avatar className="avatar image" src={`data:image/jpg;base64,${image}`} />
+      <Avatar className={`${styles.avatar}`} src={`data:image/jpg;base64,${image}`} />
     ) : (
-      <Avatar className="avatar placeholder">{getInitials(username)}</Avatar>
+      <Avatar className={`${styles.avatar} ${styles.placeholder}`}>
+        {user.profile?.FirstName?.[0]} {user.profile?.LastName?.[0]}
+      </Avatar>
     )
   ) : (
-    <Avatar className="avatar placeholder">Guest</Avatar>
+    <Avatar className={`${styles.avatar} ${styles.placeholder}`}>Guest</Avatar>
   );
 
-  const buttonLink = React.forwardRef((props, ref) => (
+  const buttonLink = forwardRef((props, ref) => (
     <Link
       {...props}
       innerRef={ref}
-      to={authentication ? `/myprofile` : '/'}
+      to={authenticated ? `/myprofile` : '/'}
       onClick={onLinkClick}
-      className="gc360-link"
+      className="gc360_link"
     />
   ));
 
-  const label = authentication ? (
+  const label = authenticated ? (
     <>
-      <Typography variant="body2" className="avatar-text" align="left" gutterBottom>
+      <Typography variant="body2" className={styles.avatar_text} align="left" gutterBottom>
         {name}
       </Typography>
-      <Typography variant="caption" className="avatar-text" align="left" gutterBottom>
+      <Typography variant="caption" className={styles.avatar_text} align="left" gutterBottom>
         {email}
       </Typography>
     </>
   ) : (
-    <Typography variant="body2" className="avatar-text" align="left" gutterBottom>
+    <Typography variant="body2" className={styles.avatar_text} align="left" gutterBottom>
       Guest
     </Typography>
   );
 
   return (
-    <Button
-      className={` gordon-nav-avatar`}
-      classes={{
-        root: 'gordon-nav-avatar button',
-        label: 'label',
-      }}
-      component={buttonLink}
-    >
-      <div className="gordon-nav-avatar">
+    <Button component={buttonLink}>
+      <div className={styles.gordon_nav_avatar}>
         {avatar}
         {label}
       </div>

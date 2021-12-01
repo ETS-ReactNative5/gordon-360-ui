@@ -1,36 +1,37 @@
 //Main timesheets page
-import React, { useState, useRef, useEffect } from 'react';
+import DateFnsUtils from '@date-io/date-fns';
 import {
-  Grid,
+  Button,
   Card,
   CardContent,
   CardHeader,
-  Link,
-  Tooltip,
   FormControl,
-  InputLabel,
-  Select,
+  Grid,
   Input,
+  InputLabel,
+  Link,
   MenuItem,
-  Button,
-  Typography,
+  Select,
   TextField,
+  Tooltip,
+  Typography,
 } from '@material-ui/core/';
-import DateFnsUtils from '@date-io/date-fns';
-import { isValid, isWithinInterval, addDays, set } from 'date-fns';
-import jobsService from 'services/jobs';
-import { MuiPickersUtilsProvider, KeyboardDateTimePicker } from '@material-ui/pickers';
-import ShiftDisplay from './components/ShiftDisplay';
 import { withStyles } from '@material-ui/core/styles';
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined';
-import { gordonColors } from 'theme';
-import './timesheets.css';
+import { KeyboardDateTimePicker, MuiPickersUtilsProvider } from '@material-ui/pickers';
+import GordonLimitedAvailability from 'components/GordonLimitedAvailability';
+import GordonOffline from 'components/GordonOffline';
+import GordonUnauthorized from 'components/GordonUnauthorized';
 import GordonLoader from 'components/Loader';
-import { makeStyles } from '@material-ui/core/styles';
 import SimpleSnackbar from 'components/Snackbar';
+import { addDays, isValid, isWithinInterval, set } from 'date-fns';
+import { useAuth, useNetworkStatus } from 'hooks';
+import { useEffect, useRef, useState } from 'react';
+import jobsService from 'services/jobs';
 import user from 'services/user';
-import useNetworkStatus from 'hooks/useNetworkStatus';
-import { ReactComponent as NoConnectionImage } from 'NoConnection.svg';
+import { gordonColors } from 'theme';
+import ShiftDisplay from './components/ShiftDisplay';
+import styles from './Timesheets.module.css';
 
 const MINIMUM_SHIFT_LENGTH = 0.08; // Minimum length for a shift is 5 minutes, 1/12 hour
 const MILLISECONDS_PER_HOUR = 3600000;
@@ -38,18 +39,13 @@ const MILLISECONDS_PER_HOUR = 3600000;
 const withNoSeconds = (date) => set(date, { seconds: 0, milliseconds: 0 });
 const withNoTime = (date) => set(date, { hours: 0, minutes: 0, seconds: 0, milliseconds: 0 });
 
-const useStyles = makeStyles((theme) => ({
-  customWidth: {
-    maxWidth: 500,
-  },
-}));
-
 const CustomTooltip = withStyles((theme) => ({
   tooltip: {
     backgroundColor: theme.palette.common.black,
     color: 'rgba(255, 255, 255, 0.87)',
     boxShadow: theme.shadows[1],
     fontSize: 12,
+    maxWidth: 500,
   },
 }))(Tooltip);
 
@@ -72,12 +68,13 @@ const Timesheets = (props) => {
   const [selectedHourType, setSelectedHourType] = useState('R');
   const [errorText, setErrorText] = useState(null);
   const isOnline = useNetworkStatus();
+  const authenticated = useAuth();
 
   useEffect(() => {
-    if (props.authentication) {
+    if (authenticated) {
       user.getProfileInfo().then((profile) => setIsUserStudent(profile.PersonType.includes('stu')));
     }
-  }, [props.authentication]);
+  }, [authenticated]);
 
   useEffect(() => {
     async function getCanUseStaff() {
@@ -180,9 +177,8 @@ const Timesheets = (props) => {
   };
 
   const tooltipRef = useRef();
-  const classes = useStyles();
 
-  if (props.authentication) {
+  if (authenticated) {
     const getSavedShiftsForUser = () => {
       return jobsService.getSavedShiftsForUser(canUseStaff);
     };
@@ -368,7 +364,7 @@ const Timesheets = (props) => {
           width: 252,
         }}
       >
-        <InputLabel className="disable-select">Jobs</InputLabel>
+        <InputLabel className="disable_select">Jobs</InputLabel>
         <Select
           value={selectedJob}
           onChange={(e) => {
@@ -391,7 +387,7 @@ const Timesheets = (props) => {
           width: 252,
         }}
       >
-        <InputLabel className="disable-select">Hour Type</InputLabel>
+        <InputLabel className="disable_select">Hour Type</InputLabel>
         <Select
           value={selectedHourType}
           onChange={(e) => {
@@ -431,7 +427,7 @@ const Timesheets = (props) => {
     if (isOnline && isUserStudent) {
       return (
         <>
-          <Grid container spacing={2}>
+          <Grid container spacing={2} className={styles.timesheets}>
             <Grid item xs={12}>
               <MuiPickersUtilsProvider utils={DateFnsUtils}>
                 <Card>
@@ -446,9 +442,8 @@ const Timesheets = (props) => {
                         <Button onClick={changeState}> {clockInOut}</Button>
                       </Grid>
                       <Grid item md={8}>
-                        <div className="header-tooltip-container">
+                        <div className={styles.header_tooltip_container}>
                           <CustomTooltip
-                            classes={{ tooltip: classes.customWidth }}
                             interactive
                             disableFocusListener
                             disableTouchListener
@@ -465,9 +460,9 @@ const Timesheets = (props) => {
                             placement="bottom"
                           >
                             <div ref={tooltipRef}>
-                              <CardHeader className="disable-select" title="Enter a shift" />
+                              <CardHeader className="disable_select" title="Enter a shift" />
                               <InfoOutlinedIcon
-                                className="tooltip-icon"
+                                className={styles.tooltip_icon}
                                 style={{
                                   fontSize: 18,
                                 }}
@@ -480,13 +475,13 @@ const Timesheets = (props) => {
                     <Grid
                       container
                       spacing={2}
-                      justify="space-between"
+                      justifyContent="space-between"
                       alignItems="center"
                       alignContent="center"
                     >
                       <Grid item xs={12} md={6} lg={3}>
                         <KeyboardDateTimePicker
-                          className="disable-select"
+                          className="disable_select"
                           style={{
                             width: 252,
                           }}
@@ -503,7 +498,7 @@ const Timesheets = (props) => {
                       </Grid>
                       <Grid item xs={12} md={6} lg={3}>
                         <KeyboardDateTimePicker
-                          className="disable-select"
+                          className="disable_select"
                           style={{
                             width: 252,
                           }}
@@ -530,7 +525,7 @@ const Timesheets = (props) => {
                       </Grid>
                       <Grid item xs={12} md={6} lg={3}>
                         <TextField
-                          className="disable-select"
+                          className="disable_select"
                           style={{
                             width: 252,
                           }}
@@ -542,7 +537,7 @@ const Timesheets = (props) => {
                         />
                       </Grid>
                       <Grid item xs={12} md={6} lg={3}>
-                        <Typography className="disable-select">
+                        <Typography className="disable_select">
                           Hours worked: {hoursWorkedInDecimal}
                         </Typography>
                       </Grid>
@@ -559,7 +554,7 @@ const Timesheets = (props) => {
                       <Grid item xs={12}>
                         <Typography>
                           <Link
-                            className="disable-select"
+                            className="disable_select"
                             style={{
                               borderBottom: '1px solid currentColor',
                               textDecoration: 'none',
@@ -598,88 +593,14 @@ const Timesheets = (props) => {
         </>
       );
     } else {
-      // If the network is offline or the user type is non-student
-      if (!isOnline || !isUserStudent) {
-        return (
-          <Grid container justify="center" spacing="16">
-            <Grid item xs={12} md={8}>
-              <Card>
-                <CardContent
-                  style={{
-                    margin: 'auto',
-                    textAlign: 'center',
-                  }}
-                >
-                  {!isOnline && (
-                    <Grid
-                      item
-                      xs={2}
-                      alignItems="center"
-                      style={{
-                        display: 'block',
-                        marginLeft: 'auto',
-                        marginRight: 'auto',
-                      }}
-                    >
-                      <NoConnectionImage />
-                    </Grid>
-                  )}
-                  <br />
-                  <h1>{!isOnline ? 'Please re-establish connection' : 'Timesheets Unavailable'}</h1>
-                  <h4>
-                    {!isOnline
-                      ? 'Timesheets entry has been disabled due to loss of network.'
-                      : 'Timesheets is currently available for students only. Support for staff will come soon!'}
-                  </h4>
-                  <br />
-                  <br />
-                  <Button
-                    color="primary"
-                    backgroundColor="white"
-                    variant="outlined"
-                    onClick={() => {
-                      window.location.pathname = '';
-                    }}
-                  >
-                    Back To Home
-                  </Button>
-                </CardContent>
-              </Card>
-            </Grid>
-          </Grid>
-        );
+      if (!isOnline) {
+        return <GordonOffline feature="Timesheets" />;
+      } else if (!isUserStudent) {
+        return <GordonLimitedAvailability pageName="TimeSheets" />;
       }
     }
   } else {
-    // The user is not logged in
-    return (
-      <Grid container justify="center">
-        <Grid item xs={12} md={8}>
-          <Card>
-            <CardContent
-              style={{
-                margin: 'auto',
-                textAlign: 'center',
-              }}
-            >
-              <h1>You are not logged in.</h1>
-              <br />
-              <h4>You must be logged in to use the Timesheets page.</h4>
-              <br />
-              <Button
-                color="primary"
-                variant="contained"
-                onClick={() => {
-                  window.location.pathname = '';
-                }}
-              >
-                Login
-              </Button>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-    );
+    return <GordonUnauthorized feature={'timesheets'} />;
   }
 };
 
