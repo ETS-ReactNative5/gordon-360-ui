@@ -19,29 +19,27 @@ export default class GordonCollapsableEventItem extends Component {
     const { event } = this.props;
 
     return (
-      <section>
-        <Grid container onClick={this.handleExpandClick} className={styles.event_item}>
-          <Grid item xs={12}>
-            <Typography variant="h6" className={styles.event_heading}>
-              {' '}
-              {event.title}{' '}
-            </Typography>
-            <Typography className={styles.event_content}> {event.timeRange} </Typography>
-            <Typography className={styles.event_content}> {event.date} </Typography>
-          </Grid>
-          <Collapse in={this.state.open} timeout="auto" unmountOnExit>
-            <CardContent>
-              <Typography className={styles.event_content}>Description:</Typography>
-              <Typography className={styles.event_content}>{event.Description}</Typography>
-              <p>
-                <nbsp />
-              </p>
-              <Typography className={styles.event_content}>Location:</Typography>
-              <Typography className={styles.event_content}>{event.location}</Typography>
-            </CardContent>
-          </Collapse>
+      <Grid container onClick={this.handleExpandClick} className={styles.event_item}>
+        <Grid item xs={12}>
+          <Typography variant="h6" className={styles.event_heading}>
+            {' '}
+            {event.title}{' '}
+          </Typography>
+          <Typography className={styles.event_content}> {event.timeRange} </Typography>
+          <Typography className={styles.event_content}> {event.date} </Typography>
         </Grid>
-      </section>
+        <Collapse in={this.state.open} timeout="auto" unmountOnExit>
+          <CardContent>
+            <Typography className={styles.event_content}>Description:</Typography>
+            <Typography className={styles.event_content}>{event.Description}</Typography>
+            <p>
+              <nbsp />
+            </p>
+            <Typography className={styles.event_content}>Location:</Typography>
+            <Typography className={styles.event_content}>{event.location}</Typography>
+          </CardContent>
+        </Collapse>
+      </Grid>
     );
   }
 }

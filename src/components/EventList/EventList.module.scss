@@ -21,8 +21,7 @@
 }
 
 // Make rows alternate white and grey
-/* stylelint-disable */
-.event_list > section:nth-child(even) {
+.event_list > div:nth-child(even) {
   background: $neutral-light-gray;
   &:hover {
     background-color: $primary-cyan;
@@ -30,11 +29,10 @@
   }
 }
 
-.event_list > section:nth-child(odd) {
+.event_list > div:nth-child(odd) {
   background: $neutral-white;
   &:hover {
     background-color: $primary-cyan;
     cursor: pointer;
   }
 }
-/* stylelint-enable */

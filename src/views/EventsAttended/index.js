@@ -1,4 +1,4 @@
-import { Button, Grid, List, Typography } from '@material-ui/core';
+import { Button, Grid } from '@material-ui/core';
 import EventList from 'components/EventList';
 import GordonUnauthorized from 'components/GordonUnauthorized';
 import GordonLoader from 'components/Loader';
@@ -23,24 +23,21 @@ const EventsAttended = () => {
   useEffect(() => {
     const loadEvents = async () => {
       if (authenticated) {
-        const attendedEvents = await event.getAttendedChapelEvents();
-        setEvents(attendedEvents);
+        setEvents(await event.getAttendedChapelEvents());
       }
       setLoading(false);
     };
     loadEvents();
   }, [authenticated]);
 
-  let content;
-
   if (loading === true) {
-    content = <GordonLoader />;
+    return <GordonLoader />;
   } else if (!authenticated) {
-    content = <GordonUnauthorized feature={'your attended events'} />;
-  } else if (events.length > 0) {
-    content = (
-      <Grid container direction="row" justifyContent="center" spacing="2">
-        <Grid item align="center">
+    return <GordonUnauthorized feature={'your attended events'} />;
+  } else {
+    return (
+      <Grid container spacing={2} justifyContent="center">
+        <Grid xs={12} item align="center">
           <Button
             variant="contained"
             style={style.button}
@@ -50,40 +47,12 @@ const EventsAttended = () => {
             Need More Chapel Credits?
           </Button>
         </Grid>
-        <Grid item>
+        <Grid item xs={12} lg={8}>
           <EventList events={events} />
         </Grid>
       </Grid>
     );
-  } else {
-    content = (
-      <Grid item align="center">
-        <br /> <br />
-        <Typography variant="h4" align="center">
-          No Events To Show
-        </Typography>
-        <br />
-        <Button
-          variant="contained"
-          style={style.button}
-          component={Link}
-          to="/events?CLW%20Credits"
-        >
-          Need More Chapel Credits?
-        </Button>
-      </Grid>
-    );
   }
-
-  return (
-    <section>
-      <Grid container justifyContent="center">
-        <Grid item xs={12} md={12} lg={8}>
-          <List>{content}</List>
-        </Grid>
-      </Grid>
-    </section>
-  );
 };
 
 export default EventsAttended;
