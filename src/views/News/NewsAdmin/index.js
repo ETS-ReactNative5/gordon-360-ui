@@ -26,6 +26,7 @@ import newsService from 'services/news';
 import userService from 'services/user';
 import { gordonColors } from 'theme';
 import NewsList from './../components/NewsList';
+import user from 'services/user'; // temporary until SN admin permissions available
 
 const CROP_DIM = 200; // Width of cropped image canvas
 
@@ -34,30 +35,15 @@ const styles2 = {
     background: gordonColors.primary.blue,
     color: 'white',
 
-    changeImageButton: {
-      background: gordonColors.primary.blue,
-      color: 'white',
-    },
-
-    resetButton: {
-      backgroundColor: '#f44336',
-      color: 'white',
-    },
     cancelButton: {
       backgroundColor: 'white',
       color: gordonColors.primary.blue,
       border: `1px solid ${gordonColors.primary.blue}`,
       width: '38%',
     },
-    hidden: {
-      display: 'none',
-    },
   },
   searchBar: {
     margin: '0 auto',
-  },
-  newNewsForm: {
-    backgroundColor: '#fff',
   },
   fab: {
     margin: 0,
@@ -77,7 +63,7 @@ const StudentNews = () => {
   const [categories, setCategories] = useState([]);
   const [news, setNews] = useState([]);
   const allNewsRef = useRef([]);
-  const [personalUnapprovedNews, setPersonalUnapprovedNews] = useState([]);
+  const [unapprovedNews, setUnapprovedNews] = useState([]);
   //const [filteredNews, setFilteredNews] = useState([]);
   const isOnline = useNetworkStatus();
   const [newPostCategory, setNewPostCategory] = useState('');
@@ -90,26 +76,33 @@ const StudentNews = () => {
   const [snackbar, setSnackbar] = useState({ open: false, text: '', severity: '' });
   const [currentUsername, setCurrentUsername] = useState('');
   const [currentlyEditing, setCurrentlyEditing] = useState(false); // false if not editing, newsID if editing
+  const [isSNAdmin, setIsSNAdmin] = useState(false);
   const cropperRef = useRef();
   const authenticated = useAuth();
 
+  useEffect(() => {
+    if (authenticated) {
+      setIsSNAdmin(user.getLocalInfo().college_role === 'god');
+    }
+  }, [authenticated]);
+
   const loadNews = useCallback(async () => {
     setLoading(true);
-    if (authenticated) {
+    if (authenticated && isSNAdmin) {
       const newsCategories = await newsService.getCategories();
-      const personalUnapprovedNews = await newsService.getPersonalUnapprovedFormatted();
+      const unapprovedNews = await newsService.getUnapprovedFormatted();
       const unexpiredNews = await newsService.getNotExpiredFormatted();
       setLoading(false);
       setCategories(newsCategories);
       setNews(unexpiredNews);
       allNewsRef.current = unexpiredNews;
-      setPersonalUnapprovedNews(personalUnapprovedNews);
+      setUnapprovedNews(unapprovedNews);
       //setFilteredNews(unexpiredNews);
     } else {
       // TODO: test authentication handling and neaten code (ex. below)
       // alert("Please sign in to access student news");
     }
-  }, [authenticated]);
+  }, [authenticated, isSNAdmin]);
 
   useEffect(() => {
     loadNews();
@@ -368,14 +361,14 @@ const StudentNews = () => {
   //Image isn't here because an image is optional
   let content;
 
-  if (authenticated) {
+  if (authenticated && isSNAdmin) {
     if (loading === true) {
       content = <GordonLoader />;
     } else {
       content = (
         <NewsList
           news={news}
-          personalUnapprovedNews={personalUnapprovedNews}
+          unapprovedNews={unapprovedNews}
           currentUsername={currentUsername}
           handleNewsItemEdit={handleNewsItemEdit}
           handleNewsItemDelete={handleNewsItemDelete}

@@ -55,7 +55,7 @@ const fullHeader = (
 
 const NewsList = ({
   news,
-  personalUnapprovedNews,
+  unapprovedNews,
   currentUsername,
   handleNewsItemEdit,
   handleNewsItemDelete,
@@ -72,13 +72,13 @@ const NewsList = ({
     };
   });
 
-  return news.length > 0 || personalUnapprovedNews.length > 0 ? (
+  return news.length > 0 || unapprovedNews.length > 0 ? (
     <Card>
       {width < BREAKPOINT_WIDTH ? singleHeader : fullHeader}
       <Grid>
         <List className={styles.news_list} disablePadding>
-          {personalUnapprovedNews.length > 0 &&
-            personalUnapprovedNews.map((posting) => (
+          {unapprovedNews.length > 0 &&
+            unapprovedNews.map((posting) => (
               <NewsItem
                 posting={posting}
                 unapproved
@@ -94,7 +94,6 @@ const NewsList = ({
             news.map((posting) => (
               <NewsItem
                 posting={posting}
-                //approved
                 size={width < BREAKPOINT_WIDTH ? 'single' : 'full'}
                 currentUsername={currentUsername}
                 handleNewsItemEdit={handleNewsItemEdit}
@@ -126,7 +125,7 @@ NewsList.propTypes = {
     }),
   ).isRequired,
 
-  personalUnapprovedNews: PropTypes.arrayOf(
+  unapprovedNews: PropTypes.arrayOf(
     PropTypes.shape({
       SNID: PropTypes.number.isRequired,
       Subject: PropTypes.string.isRequired,

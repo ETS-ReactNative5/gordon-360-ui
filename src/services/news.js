@@ -39,6 +39,8 @@ const getNewNews = () => http.get(`news/new`);
 
 const getPersonalUnapproved = () => http.get('news/personal-unapproved');
 
+const getUnapproved = () => http.get('news/unapproved');
+
 const getCategories = () => http.get(`news/categories`);
 
 const getPostingByID = (id) => http.get(`news/${id}`);
@@ -139,7 +141,7 @@ const getTodaysNews = async () => {
 // }
 
 /**
- * Get today's student news for use on the Home Page card
+ * Get personal unapproved news (formatted)
  *
  * @returns {Promise<any>} Student news
  */
@@ -151,6 +153,22 @@ const getPersonalUnapprovedFormatted = async () => {
     formatPosting(news[i]);
   }
   return personalUnapproved;
+};
+
+/**
+ * Get all unapproved news (formatted)
+ * Restricted use to SNAdmins
+ *
+ * @returns {Promise<any>} Student news
+ */
+const getUnapprovedFormatted = async () => {
+  let news = await getUnapproved();
+  const unapproved = [];
+  for (let i = 0; i < news.length; i += 1) {
+    unapproved.push(news[i]);
+    formatPosting(news[i]);
+  }
+  return unapproved;
 };
 
 /**
@@ -229,6 +247,7 @@ const newsService = {
   getCategories,
   getTodaysNews,
   getPersonalUnapprovedFormatted,
+  getUnapprovedFormatted,
   getNewNews,
   getNotExpiredFormatted,
   getFilteredNews,

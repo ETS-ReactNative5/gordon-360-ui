@@ -83,6 +83,28 @@ const NewsItem = ({
     deleteButton = <div></div>;
   }
 
+  // Approve Button
+  // Only present if the current user is a SNAdmin
+  //      and admin prop set to true
+  let approveButton;
+  if (currentUsername != null && currentUsername.toLowerCase() === posting.ADUN.toLowerCase()) {
+    approveButton = (
+      <Button
+        variant="outlined"
+        color="primary"
+        startIcon={<DeleteIcon />}
+        onClick={() => {
+          handleNewsItemDelete(posting.SNID);
+        }}
+        className={`${styles.btn} ${styles.deleteButton}`}
+      >
+        Delete
+      </Button>
+    );
+  } else {
+    approveButton = <div></div>;
+  }
+
   // SINGLE SIZE - single column per news item
   if (size === 'single') {
     return (

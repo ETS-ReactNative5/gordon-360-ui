@@ -34,30 +34,15 @@ const styles2 = {
     background: gordonColors.primary.blue,
     color: 'white',
 
-    changeImageButton: {
-      background: gordonColors.primary.blue,
-      color: 'white',
-    },
-
-    resetButton: {
-      backgroundColor: '#f44336',
-      color: 'white',
-    },
     cancelButton: {
       backgroundColor: 'white',
       color: gordonColors.primary.blue,
       border: `1px solid ${gordonColors.primary.blue}`,
       width: '38%',
     },
-    hidden: {
-      display: 'none',
-    },
   },
   searchBar: {
     margin: '0 auto',
-  },
-  newNewsForm: {
-    backgroundColor: '#fff',
   },
   fab: {
     margin: 0,
@@ -375,7 +360,7 @@ const StudentNews = () => {
       content = (
         <NewsList
           news={news}
-          personalUnapprovedNews={personalUnapprovedNews}
+          unapprovedNews={personalUnapprovedNews}
           currentUsername={currentUsername}
           handleNewsItemEdit={handleNewsItemEdit}
           handleNewsItemDelete={handleNewsItemDelete}
