@@ -63,30 +63,11 @@ const Update = (props) => {
   if (props.authentication) {
     const handleSaveButtonClick = () => {
       if (
-        userSalutation === '' &&
         userFirstName === '' &&
-        userLastName === '' &&
-        userMiddleName === '' &&
-        userPreferredName === '' &&
-        userPersonalEmail === '' &&
-        userWorkEmail === '' &&
-        userAlternateEmail === '' &&
-        userPreferredEmail === '' &&
-        userDoNotContact === false &&
-        userDoNotMail === false &&
-        userHomePhone === '' &&
-        userWorkPhone === '' &&
-        userMobilePhone === '' &&
-        userPreferredPhone === '' &&
-        userMailingStreet === '' &&
-        userMailingCity === '' &&
-        userMailingState === '' &&
-        userMailingZip === '' &&
-        userMailingCountry === '' &&
-        userMaritalStatus === ''
+        userLastName === ''
       ) {
         setSnackbarSeverity('error');
-        setSnackbarText('Please fill in at least one field.');
+        setSnackbarText('Please fill in your name.');
         setSnackbarOpen(true);
       } else {
         setSaving(true);
@@ -166,11 +147,7 @@ const Update = (props) => {
       userMaritalStatus,
     ) => {
       updateAlumniInfo.requestInfoUpdate(
-        "Michael.Xiao@gordon.edu",
-        "Michael.Xiao@gordon.edu",
-        "SUBJECT TEST",
         "EMAIL TEST",
-        "nijsus-giqwax-nyCqy4"
       );
       // await updateAlumniInfo.requestInfoUpdate(
       //   userSalutation,

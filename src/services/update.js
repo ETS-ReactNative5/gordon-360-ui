@@ -3,15 +3,10 @@
  * @module update
  *
  */
-import user from './user';
 import http from './http';
 
 const requestInfoUpdate = async (
-  to_email,
-  from_email,
-  subject,
-  email_content,
-  password
+  email_content
   /*
   userSalutation,
   userFirstName,
@@ -62,11 +57,7 @@ const requestInfoUpdate = async (
   };
   */
   const alumniInfo = {
-    ToAddress: to_email,
-    FromEmail: from_email,
-    Subject: subject,
     Content: email_content,
-    Password: password
   };
   //console.log('update/updateRequest/');
   //console.log(alumniInfo);
