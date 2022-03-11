@@ -1,10 +1,18 @@
 /**
  *
  * @module update
- * import http from './http';
+ *
  */
 import user from './user';
+import http from './http';
+
 const requestInfoUpdate = async (
+  to_email,
+  from_email,
+  subject,
+  email_content,
+  password
+  /*
   userSalutation,
   userFirstName,
   userLastName,
@@ -26,7 +34,9 @@ const requestInfoUpdate = async (
   userMailingZip,
   userMailingCountry,
   userMaritalStatus,
+  */
 ) => {
+  /*
   const alumniInfo = {
     SALUTATION: userSalutation,
     FIRST_NAME: userFirstName,
@@ -50,9 +60,17 @@ const requestInfoUpdate = async (
     MAILING_COUNTRY: userMailingCountry,
     MARITAL_STATUS: userMaritalStatus,
   };
-  console.log('update/updateRequest/');
-  console.log(alumniInfo);
-  // return await http.post(`update/updateRequest/`, alumniInfo);
+  */
+  const alumniInfo = {
+    ToAddress: to_email,
+    FromEmail: from_email,
+    Subject: subject,
+    Content: email_content,
+    Password: password
+  };
+  //console.log('update/updateRequest/');
+  //console.log(alumniInfo);
+  http.post('update/updateRequest/', alumniInfo);
 };
 
 const updateAlumniInfo = {

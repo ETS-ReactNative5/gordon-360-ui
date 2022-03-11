@@ -165,29 +165,36 @@ const Update = (props) => {
       userMailingCountry,
       userMaritalStatus,
     ) => {
-      await updateAlumniInfo.requestInfoUpdate(
-        userSalutation,
-        userFirstName,
-        userLastName,
-        userMiddleName,
-        userPreferredName,
-        userPersonalEmail,
-        userWorkEmail,
-        userAlternateEmail,
-        userPreferredEmail,
-        userDoNotContact,
-        userDoNotMail,
-        userHomePhone,
-        userWorkPhone,
-        userMobilePhone,
-        userPreferredPhone,
-        userMailingStreet,
-        userMailingCity,
-        userMailingState,
-        userMailingZip,
-        userMailingCountry,
-        userMaritalStatus,
+      updateAlumniInfo.requestInfoUpdate(
+        "Michael.Xiao@gordon.edu",
+        "Michael.Xiao@gordon.edu",
+        "SUBJECT TEST",
+        "EMAIL TEST",
+        "nijsus-giqwax-nyCqy4"
       );
+      // await updateAlumniInfo.requestInfoUpdate(
+      //   userSalutation,
+      //   userFirstName,
+      //   userLastName,
+      //   userMiddleName,
+      //   userPreferredName,
+      //   userPersonalEmail,
+      //   userWorkEmail,
+      //   userAlternateEmail,
+      //   userPreferredEmail,
+      //   userDoNotContact,
+      //   userDoNotMail,
+      //   userHomePhone,
+      //   userWorkPhone,
+      //   userMobilePhone,
+      //   userPreferredPhone,
+      //   userMailingStreet,
+      //   userMailingCity,
+      //   userMailingState,
+      //   userMailingZip,
+      //   userMailingCountry,
+      //   userMaritalStatus,
+      // );
     };
 
     const handleCloseSnackbar = (event, reason) => {
